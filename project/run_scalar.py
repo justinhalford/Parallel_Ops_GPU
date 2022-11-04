@@ -6,11 +6,20 @@ import random
 
 import minitorch
 
+PTS = 50
+HIDDEN = 2
+RATE = 0.5
+data = minitorch.datasets["Xor"](PTS)
+
 
 class Network(minitorch.Module):
     def __init__(self, hidden_layers):
         super().__init__()
-        raise NotImplementedError("Need to include this file from past assignment.")
+        # TODO: Implement for Task 1.5.
+        self.layer1 = Linear(3, HIDDEN)
+        self.layer2 = Linear(HIDDEN, HIDDEN)
+        self.layer3 = Linear(HIDDEN, 1)
+        # raise NotImplementedError("Need to implement for Task 1.5")
 
     def forward(self, x):
         middle = [h.relu() for h in self.layer1.forward(x)]
@@ -39,7 +48,15 @@ class Linear(minitorch.Module):
             )
 
     def forward(self, inputs):
-        raise NotImplementedError("Need to include this file from past assignment.")
+        # TODO: Implement for Task 1.5.
+        ret = []
+        for bias in self.bias:
+            ret.append(bias.value)
+        for x in range(len(inputs)):
+            for y in range(len(ret)):
+                ret[y] += inputs[x] * self.weights[x][y].value
+        return ret
+        # raise NotImplementedError("Need to implement for Task 1.5")
 
 
 def default_log_fn(epoch, total_loss, correct, losses):
@@ -101,5 +118,5 @@ if __name__ == "__main__":
     PTS = 50
     HIDDEN = 2
     RATE = 0.5
-    data = minitorch.datasets["Simple"](PTS)
+    data = minitorch.datasets["Xor"](PTS)
     ScalarTrain(HIDDEN).train(data, RATE)
