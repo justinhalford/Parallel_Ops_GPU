@@ -458,7 +458,48 @@ def _tensor_matrix_multiply(
     #    b) Copy into shared memory for b matrix
     #    c) Compute the dot produce for position c[i, j]
     # TODO: Implement for Task 3.4.
-    raise NotImplementedError("Need to implement for Task 3.4")
+    idx_x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+    idx_y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
+    idx_z = cuda.blockIdx.z * cuda.blockDim.z + cuda.threadIdx.z
+
+    shm_c = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
+    shm_c[cuda.threadIdx.x][cuda.threadIdx.y] = 0.0
+
+    shm_a = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
+    shm_b = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
+    count = (a_shape[-1] + THREADS_PER_BLOCK - 1) // THREADS_PER_BLOCK
+    for i in range(count):
+        # Block-(?, blockIdx.x, i) in a
+        x_a = cuda.blockIdx.x * THREADS_PER_BLOCK + cuda.threadIdx.x
+        y_a = i * THREADS_PER_BLOCK + cuda.threadIdx.y
+        z_a = (idx_z if out_shape[0] == a_shape[0] else 0)
+        if x_a < a_shape[1] and y_a < a_shape[2]:
+            pos_a = index_to_position((z_a, x_a, y_a), a_strides)
+            shm_a[cuda.threadIdx.x][cuda.threadIdx.y] = a_storage[pos_a]
+        else:
+            shm_a[cuda.threadIdx.x][cuda.threadIdx.y] = 0.0
+
+        # Block (?, i, blockIdx.y) in b
+        x_b = i * THREADS_PER_BLOCK + cuda.threadIdx.x
+        y_b = cuda.blockIdx.y * THREADS_PER_BLOCK + cuda.threadIdx.y
+        z_b = (idx_z if out_shape[0] == b_shape[0] else 0)
+        if x_b < b_shape[1] and y_b < b_shape[2]:
+            pos_b = index_to_position((z_b, x_b, y_b), b_strides)
+            shm_b[cuda.threadIdx.x][cuda.threadIdx.y] = b_storage[pos_b]
+        else:
+            shm_b[cuda.threadIdx.x][cuda.threadIdx.y] = 0.0
+
+        cuda.syncthreads()
+
+        for j in range(THREADS_PER_BLOCK):
+            shm_c[cuda.threadIdx.x][cuda.threadIdx.y] += shm_a[cuda.threadIdx.x][j] * shm_b[j][cuda.threadIdx.y]
+
+        cuda.syncthreads()
+
+    if idx_z < out_shape[0] and idx_x < out_shape[1] and idx_y < out_shape[2]:
+        pos = index_to_position((idx_z, idx_x, idx_y), out_strides)
+        out[pos] = shm_c[cuda.threadIdx.x][cuda.threadIdx.y]
+    #raise NotImplementedError("Need to implement for Task 3.4")
 
 
 tensor_matrix_multiply = cuda.jit(_tensor_matrix_multiply)
