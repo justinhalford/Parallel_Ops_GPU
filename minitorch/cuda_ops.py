@@ -150,6 +150,24 @@ def tensor_map(
         in_strides: Strides,
     ) -> None:
 
+        out_index = cuda.local.array(MAX_DIMS, numba.int32)
+        in_index = cuda.local.array(MAX_DIMS, numba.int32)
+        i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+        # TODO: Implement for Task 3.3.
+        idx = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+        if idx >= out_size:
+            return
+
+        out_index = cuda.local.array(MAX_DIMS, numba.int32)
+        in_index = cuda.local.array(MAX_DIMS, numba.int32)
+
+        to_index(idx, out_shape, out_index)
+        broadcast_index(out_index, out_shape, in_shape, in_index)
+
+        out_pos = index_to_position(out_index, out_strides)
+        in_pos = index_to_position(in_index, in_strides)
+
+        out[out_pos] = fn(in_storage[in_pos])
         #if i >= out_size:
         #    return
         #else:
@@ -278,7 +296,6 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
         for i in range(THREADS_PER_BLOCK):
             t[0] += shmem[i]
         out[cuda.blockIdx.x] = t[0]
-    #
     #if i >= size:
     #    return
 
@@ -355,7 +372,6 @@ def tensor_reduce(
 
         if cuda.threadIdx.x > 0:
             return
-        #
         #index = out_pos * cuda.blockDim.x + pos
         #if index >= out_size:
         #    return
@@ -371,7 +387,7 @@ def tensor_reduce(
         #    tmp = cuda.local.array(1, numba.float32)
         #    for i in range(BLOCK_DIM):
         #        tmp[0] += cache[i]
-           
+        #    
         #    out_index[reduce_dim] = 0
         #    out_pos = index_to_position(out_index, out_strides)
         #    out[out_pos] = fn(out[out_pos], tmp[0])
@@ -431,7 +447,6 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
         total += shm_a[idx_x][i] * shm_b[i][idx_y]
     
     out[pos] = total
-    #
     #m1 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     #m2 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
 
