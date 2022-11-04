@@ -154,17 +154,20 @@ def tensor_map(
         in_index = cuda.local.array(MAX_DIMS, numba.int32)
         i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
         # TODO: Implement for Task 3.3.
-        out_pos = cuda.blockIdx.x*cuda.blockDim.x + cuda.threadIdx.x
-        big_index = cuda.local.array(MAX_DIMS, dtype = numba.types.int32)
+        in_idx = cuda.local.array(MAX_DIMS, numba.int32)
+        out_idx = cuda.local.array(MAX_DIMS, numba.int32)
 
-        to_index(out_pos, out_shape, big_index)
-        in_index = cuda.local.array(MAX_DIMS, dtype = numba.types.int32)
+        i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+        if i >= out_size:
+            return
+        
+        to_index(i, out_shape, out_idx)
+        broadcast_index(out_idx, out_shape, in_shape, in_idx)
 
-        broadcast_index(big_index, out_shape, in_shape, in_index)
-        in_pos = index_to_position(in_index, in_strides)
+        in_pos = index_to_position(in_idx, in_strides)
+        out_pos = index_to_position(out_idx, out_strides)
 
-        if out_pos < out_size:
-            out[out_pos] = fn(in_storage[in_pos])
+        out[out_pos] = fn(in_storage[in_pos])
         #if i >= out_size:
         #    return
         #else:
@@ -216,21 +219,24 @@ def tensor_zip(
         i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        out_pos = cuda.blockIdx.x*cuda.blockDim.x + cuda.threadIdx.x
-        out_index = cuda.local.array(MAX_DIMS, dtype = numba.types.int32)
+        a_idx = cuda.local.array(MAX_DIMS, numba.int32)
+        b_idx = cuda.local.array(MAX_DIMS, numba.int32)
+        out_idx = cuda.local.array(MAX_DIMS, numba.int32)
 
-        to_index(out_pos, out_shape, out_index)
-        a_index = cuda.local.array(MAX_DIMS, dtype = numba.types.int32)
-        b_index = cuda.local.array(MAX_DIMS, dtype = numba.types.int32)
-
-        broadcast_index(out_index, out_shape, a_shape, a_index)
-        broadcast_index(out_index, out_shape, b_shape, b_index)
-
-        a_pos = index_to_position(a_index, a_strides)
-        b_pos = index_to_position(b_index, b_strides)
+        i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+        if i >= out_size:
+            return
         
-        if out_pos < out_size:
-            out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
+        to_index(i, out_shape, out_idx)
+        out_pos = index_to_position(out_idx, out_strides)
+
+        broadcast_index(out_idx, out_shape, a_shape, a_idx)
+        a_pos = index_to_position(a_idx, a_strides)
+
+        broadcast_index(out_idx, out_shape, b_shape, b_idx)
+        b_pos = index_to_position(b_idx, b_strides)
+
+        out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
         #if i >= out_size:
         #    return
         #else:
@@ -276,18 +282,34 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
     pos = cuda.threadIdx.x
 
     # TODO: Implement for Task 3.3.
+    BLOCK_DIM = 32
+    block_mem = cuda.shared.array(BLOCK_DIM, numba.float64)
+
+    i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
     if i >= size:
         return
 
-    cache[cuda.threadIdx.x] = a[i]
+    block_mem[cuda.threadIdx.x] = a[i]
 
     cuda.syncthreads()
 
-    if pos == 0:
-        curr = cuda.local.array(1, numba.float32)
+    if cuda.threadIdx.x == 0:
+        tmp = cuda.local.array(shape=1, dtype=numba.float32)
         for i in range(BLOCK_DIM):
-            curr[0] += cache[i]
-        out[cuda.blockIdx.x] = curr[0]
+            tmp[0] += block_mem[i]
+        out[cuda.blockIdx.x] = tmp[0]
+    #if i >= size:
+    #    return
+
+    #cache[cuda.threadIdx.x] = a[i]
+
+    #cuda.syncthreads()
+
+    #if pos == 0:
+    #    curr = cuda.local.array(1, numba.float32)
+    #    for i in range(BLOCK_DIM):
+    #        curr[0] += cache[i]
+    #    out[cuda.blockIdx.x] = curr[0]
     #raise NotImplementedError("Need to implement for Task 3.3")
 
 
@@ -338,25 +360,50 @@ def tensor_reduce(
         pos = cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        index = out_pos * cuda.blockDim.x + pos
-        if index >= out_size:
+        BLOCK_DIM = 1024
+
+        block_mem = cuda.shared.array(BLOCK_DIM, dtype=numba.float32)
+        a_idx = cuda.local.array(MAX_DIMS, dtype=numba.int32)
+
+        idx = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+        if idx >= out_size:
             return
 
-        to_index(index, a_shape, out_index)
-        a_pos = index_to_position(out_index, a_strides)
+        to_index(idx, a_shape, a_idx)
+        a_pos = index_to_position(a_idx, a_strides)
 
-        cache[pos] = a_storage[a_pos]
+        block_mem[cuda.threadIdx.x] = a_storage[a_pos]
 
         cuda.syncthreads()
 
-        if pos == 0:
-            tmp = cuda.local.array(1, numba.float32)
+        if cuda.threadIdx.x == 0:
+            tmp = cuda.local.array(shape=1, dtype=numba.float32)
             for i in range(BLOCK_DIM):
-                tmp[0] += cache[i]
+                tmp[0] += block_mem[i]
             
-            out_index[reduce_dim] = 0
-            out_pos = index_to_position(out_index, out_strides)
+            out_idx = a_idx
+            out_idx[reduce_dim] = 0
+            out_pos = index_to_position(out_idx, out_strides)
             out[out_pos] = fn(out[out_pos], tmp[0])
+        #index = out_pos * cuda.blockDim.x + pos
+        #if index >= out_size:
+        #    return
+
+        #to_index(index, a_shape, out_index)
+        #a_pos = index_to_position(out_index, a_strides)
+
+        #cache[pos] = a_storage[a_pos]
+
+        #cuda.syncthreads()
+
+        #if pos == 0:
+        #    tmp = cuda.local.array(1, numba.float32)
+        #    for i in range(BLOCK_DIM):
+        #        tmp[0] += cache[i]
+            
+        #    out_index[reduce_dim] = 0
+        #    out_pos = index_to_position(out_index, out_strides)
+        #    out[out_pos] = fn(out[out_pos], tmp[0])
         #raise NotImplementedError("Need to implement for Task 3.3")
         
     return cuda.jit()(_reduce)  # type: ignore
