@@ -250,7 +250,19 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
     pos = cuda.threadIdx.x
 
     # TODO: Implement for Task 3.3.
-    raise NotImplementedError("Need to implement for Task 3.3")
+    if i >= size:
+        return
+
+    cache[cuda.threadIdx.x] = a[i]
+
+    cuda.syncthreads()
+
+    if pos == 0:
+        curr = cuda.local.array(1, numba.float32)
+        for i in range(BLOCK_DIM):
+            curr[0] += cache[i]
+        out[cuda.blockIdx.x] = curr[0]
+    #raise NotImplementedError("Need to implement for Task 3.3")
 
 
 jit_sum_practice = cuda.jit()(_sum_practice)
@@ -300,8 +312,26 @@ def tensor_reduce(
         pos = cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
+        index = out_pos * cuda.blockDim.x + pos
+        if index >= out_size:
+            return
 
-        raise NotImplementedError("Need to implement for Task 3.3")
+        to_index(index, a_shape, out_index)
+        a_pos = index_to_position(out_index, a_strides)
+
+        cache[pos] = a_storage[a_pos]
+
+        cuda.syncthreads()
+
+        if pos == 0:
+            tmp = cuda.local.array(1, numba.float32)
+            for i in range(BLOCK_DIM):
+                tmp[0] += cache[i]
+            
+            out_index[reduce_dim] = 0
+            out_pos = index_to_position(out_index, out_strides)
+            out[out_pos] = fn(out[out_pos], tmp[0])
+        #raise NotImplementedError("Need to implement for Task 3.3")
         
     return cuda.jit()(_reduce)  # type: ignore
 
@@ -338,7 +368,27 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     """
     BLOCK_DIM = 32
     # TODO: Implement for Task 3.3.
-    raise NotImplementedError("Need to implement for Task 3.3")
+    m1 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    m2 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+
+    x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+    y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
+    
+    if x >= size or y >= size:
+        return
+    
+    pos = index_to_position((x, y), (size, 1))
+    m1[x][y] = a[pos]
+    m2[x][y] = b[pos]
+
+    cuda.syncthreads()
+
+    sum = 0
+    for i in range(size):
+        sum += m1[x][i] * m2[y][i]
+    
+    out[pos] = sum
+    #raise NotImplementedError("Need to implement for Task 3.3")
 
 
 jit_mm_practice = cuda.jit()(_mm_practice)
