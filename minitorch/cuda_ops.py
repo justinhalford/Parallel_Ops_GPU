@@ -150,34 +150,19 @@ def tensor_map(
         in_strides: Strides,
     ) -> None:
 
-        #out_index = cuda.local.array(MAX_DIMS, numba.int32)
-        #in_index = cuda.local.array(MAX_DIMS, numba.int32)
-        #i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-        # TODO: Implement for Task 3.3.
-        in_idx = cuda.local.array(MAX_DIMS, numba.int32)
-        out_idx = cuda.local.array(MAX_DIMS, numba.int32)
-
+        out_index = cuda.local.array(MAX_DIMS, numba.int32)
+        in_index = cuda.local.array(MAX_DIMS, numba.int32)
         i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+        # TODO: Implement for Task 3.3.
         if i >= out_size:
             return
-        
-        to_index(i, out_shape, out_idx)
-        broadcast_index(out_idx, out_shape, in_shape, in_idx)
-
-        in_pos = index_to_position(in_idx, in_strides)
-        out_pos = index_to_position(out_idx, out_strides)
-
-        out[out_pos] = fn(in_storage[in_pos])
-        ##
-        #if i >= out_size:
-        #    return
-        #else:
-        #    to_index(i, out_shape, out_index)
-        #    broadcast_index(out_index, out_shape, in_shape, in_index)
-        #    in_position = index_to_position(in_index, in_strides)
-        #    result = fn(in_storage[in_position])
-        #    out_position = index_to_position(out_index, out_strides)
-        #    out[out_position] = result
+        else:
+            to_index(i, out_shape, out_index)
+            broadcast_index(out_index, out_shape, in_shape, in_index)
+            in_position = index_to_position(in_index, in_strides)
+            result = fn(in_storage[in_position])
+            out_position = index_to_position(out_index, out_strides)
+            out[out_position] = result
        ###raise NotImplementedError("Need to implement for Task 3.3")
 
     return cuda.jit()(_map)  # type: ignore
@@ -220,37 +205,18 @@ def tensor_zip(
         i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        a_idx = cuda.local.array(MAX_DIMS, numba.int32)
-        b_idx = cuda.local.array(MAX_DIMS, numba.int32)
-        out_idx = cuda.local.array(MAX_DIMS, numba.int32)
-
-        i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
         if i >= out_size:
             return
-        
-        to_index(i, out_shape, out_idx)
-        out_pos = index_to_position(out_idx, out_strides)
-
-        broadcast_index(out_idx, out_shape, a_shape, a_idx)
-        a_pos = index_to_position(a_idx, a_strides)
-
-        broadcast_index(out_idx, out_shape, b_shape, b_idx)
-        b_pos = index_to_position(b_idx, b_strides)
-
-        out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
-        ##
-        #if i >= out_size:
-        #    return
-        #else:
-        #    to_index(i, out_shape, out_index)
-        #    broadcast_index(out_index, out_shape, a_shape, a_index)
-        #    broadcast_index(out_index, out_shape, b_shape, b_index)
-        #    a_position = index_to_position(a_index, a_strides)
-        #    b_position = index_to_position(b_index, b_strides)
-        #    a_comp = a_storage[a_position]
-        #    b_comp = b_storage[b_position]
-        #    out_position = index_to_position(out_index, out_strides)
-        #    out[out_position] = fn(a_comp, b_comp)
+        else:
+            to_index(i, out_shape, out_index)
+            broadcast_index(out_index, out_shape, a_shape, a_index)
+            broadcast_index(out_index, out_shape, b_shape, b_index)
+            a_position = index_to_position(a_index, a_strides)
+            b_position = index_to_position(b_index, b_strides)
+            a_comp = a_storage[a_position]
+            b_comp = b_storage[b_position]
+            out_position = index_to_position(out_index, out_strides)
+            out[out_position] = fn(a_comp, b_comp)
         ###raise NotImplementedError("Need to implement for Task 3.3")
 
     return cuda.jit()(_zip)  # type: ignore
@@ -283,21 +249,18 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
     pos = cuda.threadIdx.x
 
     # TODO: Implement for Task 3.3.
-    shmem = cuda.shared.array(THREADS_PER_BLOCK, numba.float64)
-
-    idx = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    if idx >= size:
-        shmem[cuda.threadIdx.x] = 0
+    if i >= size:
+        cache[pos] = 0
     else:
-        shmem[cuda.threadIdx.x] = a[idx]
+        cache[pos] = a[i]
 
     cuda.syncthreads()
 
-    if cuda.threadIdx.x == 0:
-        t = cuda.local.array(1, numba.float64)
+    if pos == 0:
+        sum = 0
         for i in range(THREADS_PER_BLOCK):
-            t[0] += shmem[i]
-        out[cuda.blockIdx.x] = t[0]
+            sum += cache[i]
+        out[cuda.blockIdx.x] = sum
     #raise NotImplementedError("Need to implement for Task 3.3")
 
 
