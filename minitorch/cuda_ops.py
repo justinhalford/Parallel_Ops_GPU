@@ -277,27 +277,41 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
     """
     BLOCK_DIM = 32
 
-    cache = cuda.shared.array(BLOCK_DIM, numba.float64)
-    i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    pos = cuda.threadIdx.x
+    #cache = cuda.shared.array(BLOCK_DIM, numba.float64)
+    #i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+    #pos = cuda.threadIdx.x
 
     # TODO: Implement for Task 3.3.
-    BLOCK_DIM = 32
-    block_mem = cuda.shared.array(BLOCK_DIM, numba.float64)
+    shmem = cuda.shared.array(THREADS_PER_BLOCK, numba.float64)
 
-    i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    if i >= size:
-        return
-
-    block_mem[cuda.threadIdx.x] = a[i]
+    idx = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+    if idx >= size:
+        shmem[cuda.threadIdx.x] = 0
+    else:
+        shmem[cuda.threadIdx.x] = a[idx]
 
     cuda.syncthreads()
 
     if cuda.threadIdx.x == 0:
-        tmp = cuda.local.array(shape=1, dtype=numba.float32)
-        for i in range(BLOCK_DIM):
-            tmp[0] += block_mem[i]
-        out[cuda.blockIdx.x] = tmp[0]
+        t = cuda.local.array(1, numba.float64)
+        for i in range(THREADS_PER_BLOCK):
+            t[0] += shmem[i]
+        out[cuda.blockIdx.x] = t[0]
+    #block_mem = cuda.shared.array(BLOCK_DIM, numba.float64)
+
+    #if i >= size:
+    #    return
+
+    #block_mem[cuda.threadIdx.x] = a[i]
+
+    #cuda.syncthreads()
+
+    #if cuda.threadIdx.x == 0:
+    #    tmp = cuda.local.array(shape=1, dtype=numba.float32)
+    #    for i in range(BLOCK_DIM):
+    #        tmp[0] += block_mem[i]
+    #    out[cuda.blockIdx.x] = tmp[0]
+    ####################################
     #if i >= size:
     #    return
 
@@ -360,31 +374,20 @@ def tensor_reduce(
         pos = cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        BLOCK_DIM = 1024
+        shmem = cuda.shared.array(1024, numba.float64)
+        index = cuda.local.array(MAX_DIMS, numba.int32)
 
-        block_mem = cuda.shared.array(BLOCK_DIM, dtype=numba.float32)
-        a_idx = cuda.local.array(MAX_DIMS, dtype=numba.int32)
+        to_index(cuda.blockIdx.x, out_shape, index)
+        
+        group_idx = index[reduce_dim]
+        idx = group_idx * cuda.blockDim.x + cuda.threadIdx.x
+        if idx < a_shape[reduce_dim]:
+            index[reduce_dim] = idx
+            a_pos = index_to_position(index, a_strides)
+            shmem[cuda.threadIdx.x] = a_storage[a_pos]
 
-        idx = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-        if idx >= out_size:
+        if cuda.threadIdx.x > 0:
             return
-
-        to_index(idx, a_shape, a_idx)
-        a_pos = index_to_position(a_idx, a_strides)
-
-        block_mem[cuda.threadIdx.x] = a_storage[a_pos]
-
-        cuda.syncthreads()
-
-        if cuda.threadIdx.x == 0:
-            tmp = cuda.local.array(shape=1, dtype=numba.float32)
-            for i in range(BLOCK_DIM):
-                tmp[0] += block_mem[i]
-            
-            out_idx = a_idx
-            out_idx[reduce_dim] = 0
-            out_pos = index_to_position(out_idx, out_strides)
-            out[out_pos] = fn(out[out_pos], tmp[0])
         #index = out_pos * cuda.blockDim.x + pos
         #if index >= out_size:
         #    return
@@ -441,26 +444,45 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     """
     BLOCK_DIM = 32
     # TODO: Implement for Task 3.3.
-    m1 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
-    m2 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    shm_a = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
+    shm_b = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
 
-    x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
-
-    if x >= size or y >= size:
+    idx_x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+    idx_y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
+    if idx_x >= size or idx_y >= size:
         return
     
-    pos = index_to_position((x, y), (size, 1))
-    m1[x][y] = a[pos]
-    m2[x][y] = b[pos]
+    pos = index_to_position((idx_x, idx_y), (size, 1))
+    shm_a[idx_x][idx_y] = a[pos]
+    shm_b[idx_x][idx_y] = b[pos]
 
     cuda.syncthreads()
 
-    sum = 0
+    total = 0.0
     for i in range(size):
-        sum += m1[x][i] * m2[y][i]
+        total += shm_a[idx_x][i] * shm_b[i][idx_y]
     
-    out[pos] = sum
+    out[pos] = total
+    #m1 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    #m2 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+
+    #x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+    #y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
+
+    #if x >= size or y >= size:
+    #    return
+    
+    #pos = index_to_position((x, y), (size, 1))
+    #m1[x][y] = a[pos]
+    #m2[x][y] = b[pos]
+
+    #cuda.syncthreads()
+
+    #sum = 0
+    #for i in range(size):
+    #    sum += m1[x][i] * m2[y][i]
+    
+    #out[pos] = sum
     #raise NotImplementedError("Need to implement for Task 3.3")
 
 
