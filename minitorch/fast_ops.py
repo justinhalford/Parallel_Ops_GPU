@@ -169,7 +169,7 @@ def tensor_map(
             out_position = index_to_position(out_index, out_strides)
             result = fn(in_storage[in_position])
             out[out_position] = result
-        ###raise NotImplementedError("Need to implement for Task 3.1")
+        #raise NotImplementedError("Need to implement for Task 3.1")
 
     return njit(parallel=True)(_map)  # type: ignore
 
@@ -220,7 +220,7 @@ def tensor_zip(
             out_position = index_to_position(out_index, out_strides)
             result = fn(a_storage[a_position], b_storage[b_position]) 
             out[out_position] = result
-        ###raise NotImplementedError("Need to implement for Task 3.1")
+        #raise NotImplementedError("Need to implement for Task 3.1")
 
     return njit(parallel=True)(_zip)  # type: ignore
 

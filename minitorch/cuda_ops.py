@@ -316,12 +316,9 @@ def tensor_reduce(
             out_index[reduce_dim] = i
             a_position = index_to_position(out_index, a_strides)
             cache[pos] = a_storage[a_position]
-
         cuda.syncthreads()
-
         for i in range(a_shape[reduce_dim]):
             reduce_value = fn(reduce_value, cache[i])
-
         out_index[reduce_dim] = b
         o_position = index_to_position(out_index, out_strides)
         out[o_position] = reduce_value
@@ -362,13 +359,13 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     """
     BLOCK_DIM = 32
     # TODO: Implement for Task 3.3.
-    m1 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
-    m2 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
     y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
     if x >= size or y >= size:
         return
     pos = index_to_position((x, y), (size, 1))
+    m1 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    m2 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     m1[x][y] = a[pos]
     m2[x][y] = b[pos]
     cuda.syncthreads()
