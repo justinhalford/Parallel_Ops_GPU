@@ -107,7 +107,10 @@ class Mul(Function):
     def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, Tensor]:
         # TODO: Implement for Task 2.4.
         a, b = ctx.saved_values
-        return (a.f.mul_zip(grad_output, b), b.f.mul_zip(grad_output, a))
+        return (
+            grad_output.f.mul_zip(grad_output, b), 
+            grad_output.f.mul_zip(grad_output, a),
+        )
 
 
 class Sigmoid(Function):
@@ -136,7 +139,7 @@ class ReLU(Function):
     def backward(ctx: Context, grad_output: Tensor) -> Any:
         # TODO: Implement for Task 2.4.
         (t1,) = ctx.saved_values
-        return t1.f.relu_back_zip(t1, grad_output)
+        return grad_output.f.relu_back_zip(t1, grad_output)
 
 
 class Log(Function):
@@ -150,7 +153,7 @@ class Log(Function):
     def backward(ctx: Context, grad_output: Tensor) -> Any:
         # TODO: Implement for Task 2.4.
         (t1,) = ctx.saved_values
-        return t1.f.log_back_zip(t1, grad_output)
+        return grad_output.f.log_back_zip(t1, grad_output)
 
 
 class Exp(Function):
@@ -165,7 +168,7 @@ class Exp(Function):
     def backward(ctx: Context, grad_output: Tensor) -> Any:
         # TODO: Implement for Task 2.4.
         (t1,) = ctx.saved_values
-        return t1.f.mul_zip(t1, grad_output)
+        return grad_output.f.mul_zip(t1, grad_output)
 
 
 class Sum(Function):
@@ -229,18 +232,19 @@ class Permute(Function):
     def forward(ctx: Context, a: Tensor, order: Tensor) -> Tensor:
         # TODO: Implement for Task 2.3.
         ctx.save_for_backward(order)
-        y = [int(order[x]) for x in range(order.size)]
-        return a._new(a._tensor.permute(*y))
+        return a._new(a._tensor.permute(*[int(order[i]) for i in range(order.size)]))
 
     @staticmethod
     def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, float]:
         # TODO: Implement for Task 2.4.
-        (order,) = ctx.saved_values
-        y = [int(order[x]) for x in range(order.size)]
-        x = [0] * (len(y))
-        for index, val in enumerate(y):
-            x[val] = index
-        return grad_output._new(grad_output._tensor.permute(*x)), 0.0
+        order: Tensor = ctx.saved_values[0]
+        order2: List[int] = [
+            a[0]
+            for a in sorted(
+                enumerate([order[i] for i in range(order.size)]), key = lambda a: a[1]
+            )
+        ]
+        return grad_output._new(grad_output._tensor.permute(*order2)), 0.0
 
 
 class View(Function):
