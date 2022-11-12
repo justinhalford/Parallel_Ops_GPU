@@ -345,20 +345,29 @@ def tensor_reduce(
 
         # TODO: Implement for Task 3.3.
 
-        shmem = cuda.shared.array(BLOCK_DIM, numba.float64)
-        index = cuda.local.array(MAX_DIMS, numba.int32)
+        block_mem = cuda.shared.array(BLOCK_DIM, dtype=numba.float32)
+        a_idx = cuda.local.array(MAX_DIMS, dtype=numba.int32)
 
-        to_index(cuda.blockIdx.x, out_shape, index)
-        
-        group_idx = index[reduce_dim]
-        idx = group_idx * cuda.blockDim.x + cuda.threadIdx.x
-        if idx < a_shape[reduce_dim]:
-            index[reduce_dim] = idx
-            a_pos = index_to_position(index, a_strides)
-            shmem[cuda.threadIdx.x] = a_storage[a_pos]
-
-        if cuda.threadIdx.x > 0:
+        idx = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+        if idx >= out_size:
             return
+
+        to_index(idx, a_shape, a_idx)
+        a_pos = index_to_position(a_idx, a_strides)
+
+        block_mem[cuda.threadIdx.x] = a_storage[a_pos]
+
+        cuda.syncthreads()
+
+        if cuda.threadIdx.x == 0:
+            tmp = cuda.local.array(shape=1, dtype=numba.float32)
+            for i in range(BLOCK_DIM):
+                tmp[0] += block_mem[i]
+            
+            out_idx = a_idx
+            out_idx[reduce_dim] = 0
+            out_pos = index_to_position(out_idx, out_strides)
+            out[out_pos] = fn(out[out_pos], tmp[0])
         ##
         #index = out_pos * cuda.blockDim.x + pos
         #if index >= out_size:
