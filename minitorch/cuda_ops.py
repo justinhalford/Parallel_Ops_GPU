@@ -305,35 +305,28 @@ def tensor_reduce(
         reduce_value: float,
     ) -> None:
         BLOCK_DIM = 1024
-        #cache = cuda.shared.array(BLOCK_DIM, numba.float64)
-        #out_index = cuda.local.array(MAX_DIMS, numba.int32)
-        #out_pos = cuda.blockIdx.x
-        #pos = cuda.threadIdx.x
+        cache = cuda.shared.array(BLOCK_DIM, numba.float64)
+        out_index = cuda.local.array(MAX_DIMS, numba.int32)
+        out_pos = cuda.blockIdx.x
+        pos = cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        shmem = cuda.shared.array(1024, numba.float64)
-        index = cuda.local.array(MAX_DIMS, numba.int32)
+        to_index(out_pos, out_shape, out_index)
+        b = out_index[reduce_dim]
+        i = b * out_pos + pos
+        if i < a_shape[reduce_dim]:
+            out_index[reduce_dim] = i
+            a_position = index_to_position(out_index, a_strides)
+            cache[pos] = a_storage[a_position]
 
-        to_index(cuda.blockIdx.x, out_shape, index)
-        
-        group_idx = index[reduce_dim]
-        idx = group_idx * cuda.blockDim.x + cuda.threadIdx.x
-        if idx < a_shape[reduce_dim]:
-            index[reduce_dim] = idx
-            a_pos = index_to_position(index, a_strides)
-            shmem[cuda.threadIdx.x] = a_storage[a_pos]
+        cuda.syncthreads()
 
-        if cuda.threadIdx.x > 0:
-            return
-
-        t = reduce_value
         for i in range(a_shape[reduce_dim]):
-            t = fn(t, shmem[i])
+            reduce_value = fn(reduce_value, cache[i])
 
-        index[reduce_dim] = group_idx
-        pos = index_to_position(index, out_strides)
-        out[pos] = t
-
+        out_index[reduce_dim] = b
+        o_position = index_to_position(out_index, out_strides)
+        out[o_position] = reduce_value
         #raise NotImplementedError("Need to implement for Task 3.3")
         
     return cuda.jit()(_reduce)  # type: ignore
