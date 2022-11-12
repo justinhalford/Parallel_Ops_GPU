@@ -220,25 +220,24 @@ def tensor_zip(
         i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        return
-        #a_idx = cuda.local.array(MAX_DIMS, numba.int32)
-        #b_idx = cuda.local.array(MAX_DIMS, numba.int32)
-        #out_idx = cuda.local.array(MAX_DIMS, numba.int32)
+        a_idx = cuda.local.array(MAX_DIMS, numba.int32)
+        b_idx = cuda.local.array(MAX_DIMS, numba.int32)
+        out_idx = cuda.local.array(MAX_DIMS, numba.int32)
 
-        #i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-        #if i >= out_size:
-        #    return
+        i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+        if i >= out_size:
+            return
         
-        #to_index(i, out_shape, out_idx)
-        #out_pos = index_to_position(out_idx, out_strides)
+        to_index(i, out_shape, out_idx)
+        out_pos = index_to_position(out_idx, out_strides)
 
-        #broadcast_index(out_idx, out_shape, a_shape, a_idx)
-        #a_pos = index_to_position(a_idx, a_strides)
+        broadcast_index(out_idx, out_shape, a_shape, a_idx)
+        a_pos = index_to_position(a_idx, a_strides)
 
-        #broadcast_index(out_idx, out_shape, b_shape, b_idx)
-        #b_pos = index_to_position(b_idx, b_strides)
+        broadcast_index(out_idx, out_shape, b_shape, b_idx)
+        b_pos = index_to_position(b_idx, b_strides)
 
-        #out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
+        out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
         ##
         #if i >= out_size:
         #    return
