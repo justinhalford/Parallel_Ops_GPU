@@ -62,7 +62,7 @@ def max(x: float, y: float) -> float:
 def is_close(x: float, y: float) -> float:
     "$f(x) = |x - y| < 1e-2$"
     # TODO: Implement for Task 0.1.
-    return abs(x - y) < 1**-2
+    return (x-y < 1e-2) and (y-x < 1e-2)
     # raise NotImplementedError("Need to implement for Task 0.1")
 
 
@@ -82,7 +82,7 @@ def sigmoid(x: float) -> float:
     if x >= 0:
         return 1.0 / (1.0 + math.exp(-x))
     else:
-        return math.exp(x) / (1 + math.exp(x))
+        return math.exp(x) / (1.0 + math.exp(x))
     # raise NotImplementedError("Need to implement for Task 0.1")
 
 
@@ -166,18 +166,20 @@ def map(fn: Callable[[float], float]) -> Callable[[Iterable[float]], Iterable[fl
          new list
     """
     # TODO: Implement for Task 0.3.
-    def apply(ls: Iterable[float]) -> Iterable[float]:
-        return [fn(x) for x in ls]
-
-    return apply
+    def _map(ls: Iterable[float]) -> Iterable[float]:
+        ret = []
+        for x in ls:
+            ret.append(fn(x))
+        return ret
+    
+    return _map
     # raise NotImplementedError("Need to implement for Task 0.3")
 
 
 def negList(ls: Iterable[float]) -> Iterable[float]:
     "Use `map` and `neg` to negate each element in `ls`"
     # TODO: Implement for Task 0.3.
-    negativeList: Callable[[Iterable[float]], Iterable[float]] = map(neg)
-    return negativeList(ls)
+    return map(neg)(ls)
     # raise NotImplementedError("Need to implement for Task 0.3")
 
 
@@ -198,10 +200,13 @@ def zipWith(
 
     """
     # TODO: Implement for Task 0.3.
-    def apply(ls1: Iterable[float], ls2: Iterable[float]) -> Iterable[float]:
-        return [fn(x, y) for x, y in zip(ls1, ls2)]
+    def _zipWith(ls1: Iterable[float], ls2: Iterable[float]) -> Iterable[float]:
+        ret = []
+        for x, y in zip(ls1, ls2):
+            ret.append(fn(x, y))
+        return ret
 
-    return apply
+    return _zipWith
     # raise NotImplementedError("Need to implement for Task 0.3")
 
 
@@ -228,17 +233,13 @@ def reduce(
          fn(x_1, x_0)))`
     """
     # TODO: Implement for Task 0.3.
-    def apply(ls: Iterable[float]) -> float:
-        if len(list(ls)) == 0:
-            return 0
-        x: int = int(start)
-        list_ = list(ls)
-        curr: float = list_[x]
-        for i in range(1, len(list_)):
-            curr = fn(curr, list_[i])
-        return curr
+    def _reduce(ls: Iterable[float]) -> float:
+        val = start
+        for l in ls:
+            val = fn(val, l)
+        return val
 
-    return apply
+    return _reduce
     # raise NotImplementedError("Need to implement for Task 0.3")
     # ADDING TO SATISFY FLAKE8's NEED FOR SEQUENCE TO BE USED SINCE IT IS IMPORTED
     ls2: Sequence[int] = [42]
@@ -249,14 +250,12 @@ def reduce(
 def sum(ls: Iterable[float]) -> float:
     "Sum up a list using `reduce` and `add`."
     # TODO: Implement for Task 0.3.
-    adder: Callable[[Iterable[float]], float] = reduce(add, 0)
-    return adder(ls)
+    return reduce(add, 0.0)(ls)
     # raise NotImplementedError("Need to implement for Task 0.3")
 
 
 def prod(ls: Iterable[float]) -> float:
     "Product of a list using `reduce` and `mul`."
     # TODO: Implement for Task 0.3.
-    multy: Callable[[Iterable[float]], float] = reduce(mul, 0)
-    return multy(ls)
+    return reduce(mul, 1.0)(ls)
     # raise NotImplementedError("Need to implement for Task 0.3")
