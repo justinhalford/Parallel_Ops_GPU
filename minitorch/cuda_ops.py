@@ -154,21 +154,21 @@ def tensor_map(
         #in_index = cuda.local.array(MAX_DIMS, numba.int32)
         #i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
         # TODO: Implement for Task 3.3.
-        return
-        #in_idx = cuda.local.array(MAX_DIMS, numba.int32)
-        #out_idx = cuda.local.array(MAX_DIMS, numba.int32)
+        in_idx = cuda.local.array(MAX_DIMS, numba.int32)
+        out_idx = cuda.local.array(MAX_DIMS, numba.int32)
 
-        #i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-        #if i >= out_size:
-        #    return
+        i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+        if i >= out_size:
+            return
         
-        #to_index(i, out_shape, out_idx)
-        #broadcast_index(out_idx, out_shape, in_shape, in_idx)
+        to_index(i, out_shape, out_idx)
+        broadcast_index(out_idx, out_shape, in_shape, in_idx)
 
-        #in_pos = index_to_position(in_idx, in_strides)
-        #out_pos = index_to_position(out_idx, out_strides)
+        in_pos = index_to_position(in_idx, in_strides)
+        out_pos = index_to_position(out_idx, out_strides)
 
-        #out[out_pos] = fn(in_storage[in_pos])
+        out[out_pos] = fn(in_storage[in_pos])
+        ##
         #if i >= out_size:
         #    return
         #else:
@@ -338,27 +338,26 @@ def tensor_reduce(
         reduce_value: float,
     ) -> None:
         BLOCK_DIM = 1024
-        cache = cuda.shared.array(BLOCK_DIM, numba.float64)
-        out_index = cuda.local.array(MAX_DIMS, numba.int32)
-        out_pos = cuda.blockIdx.x
-        pos = cuda.threadIdx.x
+        #cache = cuda.shared.array(BLOCK_DIM, numba.float64)
+        #out_index = cuda.local.array(MAX_DIMS, numba.int32)
+        #out_pos = cuda.blockIdx.x
+        #pos = cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        return
-        #shmem = cuda.shared.array(1024, numba.float64)
-        #index = cuda.local.array(MAX_DIMS, numba.int32)
+        shmem = cuda.shared.array(BLOCK_DIM, numba.float64)
+        index = cuda.local.array(MAX_DIMS, numba.int32)
 
-        #to_index(cuda.blockIdx.x, out_shape, index)
+        to_index(cuda.blockIdx.x, out_shape, index)
         
-        #group_idx = index[reduce_dim]
-        #idx = group_idx * cuda.blockDim.x + cuda.threadIdx.x
-        #if idx < a_shape[reduce_dim]:
-        #    index[reduce_dim] = idx
-        #    a_pos = index_to_position(index, a_strides)
-        #    shmem[cuda.threadIdx.x] = a_storage[a_pos]
+        group_idx = index[reduce_dim]
+        idx = group_idx * cuda.blockDim.x + cuda.threadIdx.x
+        if idx < a_shape[reduce_dim]:
+            index[reduce_dim] = idx
+            a_pos = index_to_position(index, a_strides)
+            shmem[cuda.threadIdx.x] = a_storage[a_pos]
 
-        #if cuda.threadIdx.x > 0:
-        #    return
+        if cuda.threadIdx.x > 0:
+            return
         ##
         #index = out_pos * cuda.blockDim.x + pos
         #if index >= out_size:
@@ -416,26 +415,25 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     """
     BLOCK_DIM = 32
     # TODO: Implement for Task 3.3.
-    return
-    #shm_a = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
-    #shm_b = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
+    shm_a = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    shm_b = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
 
-    #idx_x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    #idx_y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
-    #if idx_x >= size or idx_y >= size:
-    #    return
+    idx_x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+    idx_y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
+    if idx_x >= size or idx_y >= size:
+        return
     
-    #pos = index_to_position((idx_x, idx_y), (size, 1))
-    #shm_a[idx_x][idx_y] = a[pos]
-    #shm_b[idx_x][idx_y] = b[pos]
+    pos = index_to_position((idx_x, idx_y), (size, 1))
+    shm_a[idx_x][idx_y] = a[pos]
+    shm_b[idx_x][idx_y] = b[pos]
 
-    #cuda.syncthreads()
+    cuda.syncthreads()
 
-    #total = 0.0
-    #for i in range(size):
-    #    total += shm_a[idx_x][i] * shm_b[i][idx_y]
+    total = 0.0
+    for i in range(size):
+        total += shm_a[idx_x][i] * shm_b[i][idx_y]
     
-    #out[pos] = total
+    out[pos] = total
     ##
     #m1 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     #m2 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
