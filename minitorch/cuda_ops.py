@@ -284,47 +284,17 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
     pos = cuda.threadIdx.x
 
     # TODO: Implement for Task 3.3.
-    return
-    #if i >= size:
-    #    cache[pos] = 0
-    #else:
-    #    cache[pos] = a[i]
+    if i >= size:
+        return
+    
+    cache[pos] = a[i]
+    cuda.syncthreads()
 
-    #cuda.syncthreads()
-
-    #if pos == 0:
-    #    t = cuda.local.array(1, numba.float64)
-    #    for i in range(BLOCK_DIM):
-    #        t[0] += cache[i]
-    #    out[pos] = t[0]
-    ##
-    #block_mem = cuda.shared.array(BLOCK_DIM, numba.float64)
-
-    #if i >= size:
-    #    return
-
-    #block_mem[cuda.threadIdx.x] = a[i]
-
-    #cuda.syncthreads()
-
-    #if cuda.threadIdx.x == 0:
-    #    tmp = cuda.local.array(shape=1, dtype=numba.float32)
-    #    for i in range(BLOCK_DIM):
-    #        tmp[0] += block_mem[i]
-    #    out[cuda.blockIdx.x] = tmp[0]
-    ####################################
-    #if i >= size:
-    #    return
-
-    #cache[cuda.threadIdx.x] = a[i]
-
-    #cuda.syncthreads()
-
-    #if pos == 0:
-    #    curr = cuda.local.array(1, numba.float32)
-    #    for i in range(BLOCK_DIM):
-    #        curr[0] += cache[i]
-    #    out[cuda.blockIdx.x] = curr[0]
+    if pos == 0:
+        t = cuda.local.array(1, numba.float64)
+        for i in range(BLOCK_DIM):
+            t[0] += cache[i]
+        out[pos] = t[0]
     #raise NotImplementedError("Need to implement for Task 3.3")
 
 
