@@ -247,23 +247,18 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
     cache = cuda.shared.array(BLOCK_DIM, numba.float64)
     i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
     pos = cuda.threadIdx.x
-
+    
     # TODO: Implement for Task 3.3.
-    shmem = cuda.shared.array(THREADS_PER_BLOCK, numba.float64)
-
-    idx = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    if idx >= size:
-        shmem[cuda.threadIdx.x] = 0
+    if i >= size:
+        cache[pos] = 0
     else:
-        shmem[cuda.threadIdx.x] = a[idx]
-
+        cache[pos] = a[i]
     cuda.syncthreads()
-
-    if cuda.threadIdx.x == 0:
-        t = cuda.local.array(1, numba.float64)
-        for i in range(THREADS_PER_BLOCK):
-            t[0] += shmem[i]
-        out[cuda.blockIdx.x] = t[0]
+    if pos == 0:
+        sum = 0
+        for index in range(THREADS_PER_BLOCK):
+            sum += cache[index]
+        out[cuda.blockIdx.x] = sum
     #raise NotImplementedError("Need to implement for Task 3.3")
 
 
