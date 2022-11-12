@@ -163,7 +163,7 @@ def tensor_map(
             result = fn(in_storage[in_position])
             out_position = index_to_position(out_index, out_strides)
             out[out_position] = result
-       ###raise NotImplementedError("Need to implement for Task 3.3")
+       #raise NotImplementedError("Need to implement for Task 3.3")
 
     return cuda.jit()(_map)  # type: ignore
 
@@ -217,7 +217,7 @@ def tensor_zip(
             b_comp = b_storage[b_position]
             out_position = index_to_position(out_index, out_strides)
             out[out_position] = fn(a_comp, b_comp)
-        ###raise NotImplementedError("Need to implement for Task 3.3")
+        #raise NotImplementedError("Need to implement for Task 3.3")
 
     return cuda.jit()(_zip)  # type: ignore
 
@@ -255,10 +255,10 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
         cache[pos] = a[i]
     cuda.syncthreads()
     if pos == 0:
-        sum = 0
+        sum = cuda.local.array(1, numba.float64)
         for index in range(BLOCK_DIM):
-            sum += cache[index]
-        out[pos] = sum
+            sum[0] += cache[index]
+        out[pos] = sum[0]
     #raise NotImplementedError("Need to implement for Task 3.3")
 
 

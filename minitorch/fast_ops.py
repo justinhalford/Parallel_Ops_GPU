@@ -319,7 +319,6 @@ def _tensor_matrix_multiply(
 
     # TODO: Implement for Task 3.2.
     assert a_shape[-1] == b_shape[-2]
-
     for i in prange(len(out)):
         out_index = out_shape.copy()
         to_index(i, out_shape, out_index)
