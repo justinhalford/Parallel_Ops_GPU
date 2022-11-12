@@ -258,7 +258,7 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
 
     if pos == 0:
         sum = 0
-        for i in range(THREADS_PER_BLOCK):
+        for i in range(BLOCK_DIM):
             sum += cache[i]
         out[cuda.blockIdx.x] = sum
     #raise NotImplementedError("Need to implement for Task 3.3")
@@ -305,54 +305,35 @@ def tensor_reduce(
         reduce_value: float,
     ) -> None:
         BLOCK_DIM = 1024
-        #cache = cuda.shared.array(BLOCK_DIM, numba.float64)
-        #out_index = cuda.local.array(MAX_DIMS, numba.int32)
-        #out_pos = cuda.blockIdx.x
-        #pos = cuda.threadIdx.x
+        cache = cuda.shared.array(BLOCK_DIM, numba.float64)
+        out_index = cuda.local.array(MAX_DIMS, numba.int32)
+        out_pos = cuda.blockIdx.x
+        pos = cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        shmem = cuda.shared.array(1024, numba.float64)
-        index = cuda.local.array(MAX_DIMS, numba.int32)
+        block_mem = cuda.shared.array(BLOCK_DIM, dtype=numba.float32)
+        a_idx = cuda.local.array(MAX_DIMS, dtype=numba.int32)
 
-        to_index(cuda.blockIdx.x, out_shape, index)
-        
-        group_idx = index[reduce_dim]
-        idx = group_idx * cuda.blockDim.x + cuda.threadIdx.x
-        if idx < a_shape[reduce_dim]:
-            index[reduce_dim] = idx
-            a_pos = index_to_position(index, a_strides)
-            shmem[cuda.threadIdx.x] = a_storage[a_pos]
-
-        if cuda.threadIdx.x > 0:
+        idx = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+        if idx >= out_size:
             return
 
-        t = reduce_value
-        for i in range(a_shape[reduce_dim]):
-            t = fn(t, shmem[i])
+        to_index(idx, a_shape, a_idx)
+        a_pos = index_to_position(a_idx, a_strides)
 
-        index[reduce_dim] = group_idx
-        pos = index_to_position(index, out_strides)
-        out[pos] = t
-        ##
-        #index = out_pos * cuda.blockDim.x + pos
-        #if index >= out_size:
-        #    return
+        block_mem[cuda.threadIdx.x] = a_storage[a_pos]
 
-        #to_index(index, a_shape, out_index)
-        #a_pos = index_to_position(out_index, a_strides)
+        cuda.syncthreads()
 
-        #cache[pos] = a_storage[a_pos]
-
-        #cuda.syncthreads()
-
-        #if pos == 0:
-        #    tmp = cuda.local.array(1, numba.float32)
-        #    for i in range(BLOCK_DIM):
-        #        tmp[0] += cache[i]
+        if cuda.threadIdx.x == 0:
+            tmp = cuda.local.array(shape=1, dtype=numba.float32)
+            for i in range(BLOCK_DIM):
+                tmp[0] += block_mem[i]
             
-        #    out_index[reduce_dim] = 0
-        #    out_pos = index_to_position(out_index, out_strides)
-        #    out[out_pos] = fn(out[out_pos], tmp[0])
+            out_idx = a_idx
+            out_idx[reduce_dim] = 0
+            out_pos = index_to_position(out_idx, out_strides)
+            out[out_pos] = fn(out[out_pos], tmp[0])
         #raise NotImplementedError("Need to implement for Task 3.3")
         
     return cuda.jit()(_reduce)  # type: ignore
