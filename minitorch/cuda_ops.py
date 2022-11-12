@@ -311,29 +311,27 @@ def tensor_reduce(
         pos = cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        block_mem = cuda.shared.array(BLOCK_DIM, dtype=numba.float32)
-        a_idx = cuda.local.array(MAX_DIMS, dtype=numba.int32)
+        shmem = cuda.shared.array(1024, numba.float64)
+        index = cuda.local.array(MAX_DIMS, numba.int32)
 
-        idx = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-        if idx >= out_size:
+        to_index(out_pos, out_shape, out_index)
+        
+        b = out_index[reduce_dim]
+        i = b * out_pos + pos
+        if i < a_shape[reduce_dim]:
+            out_index[reduce_dim] = i
+            a_position = index_to_position(out_index, a_strides)
+            cache[pos] = a_storage[a_position]
+
+        if pos > 0:
             return
 
-        to_index(idx, a_shape, a_idx)
-        a_pos = index_to_position(a_idx, a_strides)
+        for i in range(a_shape[reduce_dim]):
+            reduce_value = fn(reduce_value, cache[i])
 
-        block_mem[cuda.threadIdx.x] = a_storage[a_pos]
-
-        cuda.syncthreads()
-
-        if cuda.threadIdx.x == 0:
-            tmp = cuda.local.array(shape=1, dtype=numba.float32)
-            for i in range(BLOCK_DIM):
-                tmp[0] += block_mem[i]
-            
-            out_idx = a_idx
-            out_idx[reduce_dim] = 0
-            out_pos = index_to_position(out_idx, out_strides)
-            out[out_pos] = fn(out[out_pos], tmp[0])
+        out_index[reduce_dim] = b
+        o_position = index_to_position(index, out_strides)
+        out[o_position] = reduce_value
         #raise NotImplementedError("Need to implement for Task 3.3")
         
     return cuda.jit()(_reduce)  # type: ignore
