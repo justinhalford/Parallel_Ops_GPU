@@ -311,11 +311,10 @@ def tensor_reduce(
         pos = cuda.threadIdx.x
 
         # TODO: Implement for Task 3.3.
-        shmem = cuda.shared.array(1024, numba.float64)
-        index = cuda.local.array(MAX_DIMS, numba.int32)
+        if pos > 0:
+            return
 
         to_index(out_pos, out_shape, out_index)
-        
         b = out_index[reduce_dim]
         i = b * out_pos + pos
         if i < a_shape[reduce_dim]:
@@ -323,14 +322,12 @@ def tensor_reduce(
             a_position = index_to_position(out_index, a_strides)
             cache[pos] = a_storage[a_position]
 
-        if pos > 0:
-            return
+        cuda.syncthreads()
 
         for i in range(a_shape[reduce_dim]):
             reduce_value = fn(reduce_value, cache[i])
-
         out_index[reduce_dim] = b
-        o_position = index_to_position(index, out_strides)
+        o_position = index_to_position(out_index, out_strides)
         out[o_position] = reduce_value
         #raise NotImplementedError("Need to implement for Task 3.3")
         
