@@ -447,25 +447,27 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     """
     BLOCK_DIM = 32
     # TODO: Implement for Task 3.3.
-    shm_a = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
-    shm_b = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
+    return
+    #shm_a = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
+    #shm_b = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
 
-    idx_x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-    idx_y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
-    if idx_x >= size or idx_y >= size:
-        return
+    #idx_x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
+    #idx_y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
+    #if idx_x >= size or idx_y >= size:
+    #    return
     
-    pos = index_to_position((idx_x, idx_y), (size, 1))
-    shm_a[idx_x][idx_y] = a[pos]
-    shm_b[idx_x][idx_y] = b[pos]
+    #pos = index_to_position((idx_x, idx_y), (size, 1))
+    #shm_a[idx_x][idx_y] = a[pos]
+    #shm_b[idx_x][idx_y] = b[pos]
 
-    cuda.syncthreads()
+    #cuda.syncthreads()
 
-    total = 0.0
-    for i in range(size):
-        total += shm_a[idx_x][i] * shm_b[i][idx_y]
+    #total = 0.0
+    #for i in range(size):
+    #    total += shm_a[idx_x][i] * shm_b[i][idx_y]
     
-    out[pos] = total
+    #out[pos] = total
+    ##
     #m1 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     #m2 = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
 
