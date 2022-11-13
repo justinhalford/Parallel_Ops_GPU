@@ -361,10 +361,10 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
     if x >= size or y >= size:
         return
-    location = np.array([x, y], np.int32)
+    #location = np.array([x, y], np.int32)
     a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
-    position = index_to_position(location, (size, 1))
+    position = index_to_position((x, y), (size, 1))
     a_shared[x][y], b_shared[x][y] = a[position], b[position]
     cuda.syncthreads()
     sum = 0.0
