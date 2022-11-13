@@ -245,7 +245,6 @@ def _sum_practice(out: Storage, a: Storage, size: int) -> None:
     cache = cuda.shared.array(BLOCK_DIM, numba.float64)
     i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
     pos = cuda.threadIdx.x
-
     # TODO: Implement for Task 3.3.
     if i >= size:
         cache[pos] = 0
@@ -318,8 +317,8 @@ def tensor_reduce(
         for i in range(a_shape[reduce_dim]):
             reduce_value = fn(reduce_value, cache[i])
         out_index[reduce_dim] = b
-        o_position = index_to_position(out_index, out_strides)
-        out[o_position] = reduce_value
+        out_position = index_to_position(out_index, out_strides)
+        out[out_position] = reduce_value
         #raise NotImplementedError("Need to implement for Task 3.3")
         
     return cuda.jit()(_reduce)  # type: ignore
@@ -364,13 +363,12 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     position = index_to_position((x, y), (size, 1))
-    a_shared[x][y] = a[position]
-    b_shared[x][y] = b[position]
+    a_shared[x][y], b_shared[x][y] = a[position], b[position]
     cuda.syncthreads()
-    total = 0.0
+    sum = 0.0
     for i in range(size):
-        total += a_shared[x][i] * b_shared[i][y]
-    out[position] = total
+        sum += a_shared[x][i] * b_shared[i][y]
+    out[position] = sum
     #raise NotImplementedError("Need to implement for Task 3.3")
 
 
@@ -462,7 +460,7 @@ def _tensor_matrix_multiply(
         #Need to wait for all threads from all blocks
         cuda.syncthreads()
     #Fill in out with c[pi][pj] values
-    if i < out_shape[1] and j < out_shape[2] and k < out_shape[0]:
+    if i < out_shape[1] and j < out_shape[2]:
         out[index_to_position((k, i, j), out_strides)] = c_shared[pi][pj]
     #raise NotImplementedError("Need to implement for Task 3.4")
 
