@@ -458,11 +458,10 @@ def _tensor_matrix_multiply(
             m * BLOCK_DIM + pj,
             (0 if out_shape[0] != a_shape[0] else k),
         )
-        arg = np.ndarray([kA, iA, jA])
         a_shared[pi][pj] = (
             0.0
             if iA >= a_shape[1] or jA >= a_shape[2]
-            else a_storage[index_to_position(arg, a_strides)]
+            else a_storage[index_to_position((kA, iA, jA), a_strides)]
         )
         # Copy into shared memory for b matrix
         iB, jB, kB = (
