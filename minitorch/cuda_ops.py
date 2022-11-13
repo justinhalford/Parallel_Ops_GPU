@@ -449,7 +449,7 @@ def _tensor_matrix_multiply(
     #Initialize values in c_shared to 0.0, using thread's location on the block. Some redundancy, not issue given use of syncthreads.
     c_shared[pi][pj] = 0.0
     bX, bY, k = cuda.blockIdx.x, cuda.blockIdx.y, cuda.blockIdx.z * cuda.blockDim.z + cuda.threadIdx.z
-    for m in range((a_shape[-1] + BLOCK_DIM) // BLOCK_DIM):
+    for m in range((a_shape[-1] + BLOCK_DIM - 1) // BLOCK_DIM):
         #Copy into shared memory for a matrix
         iA, jA, kA = bX * BLOCK_DIM + pi, m * BLOCK_DIM + pj, (0.0 if out_shape[0] != a_shape[0] else k)
         a_shared[pi][pj] = (0.0 if iA >= a_shape[1] or jA >= a_shape[2] else a_storage[index_to_position((kA, iA, jA), a_strides)])
