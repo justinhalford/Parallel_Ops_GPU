@@ -458,8 +458,7 @@ def _tensor_matrix_multiply(
         y_a = i * BLOCK_DIM + pj
         z_a = (k if out_shape[0] == a_shape[0] else 0)
         if x_a < a_shape[1] and y_a < a_shape[2]:
-            a_position = index_to_position((z_a, x_a, y_a), a_strides)
-            a_shared[pi][pj] = a_storage[a_position]
+            a_shared[pi][pj] = a_storage[index_to_position((z_a, x_a, y_a), a_strides)]
         else:
             a_shared[pi][pj] = 0.0
 
@@ -468,8 +467,7 @@ def _tensor_matrix_multiply(
         y_b = yB * BLOCK_DIM + pj
         z_b = (k if out_shape[0] == b_shape[0] else 0)
         if x_b < b_shape[1] and y_b < b_shape[2]:
-            b_position = index_to_position((z_b, x_b, y_b), b_strides)
-            b_shared[pi][pj] = b_storage[b_position]
+            b_shared[pi][pj] = b_storage[index_to_position((z_b, x_b, y_b), b_strides)]
         else:
             b_shared[pi][pj] = 0.0
 
