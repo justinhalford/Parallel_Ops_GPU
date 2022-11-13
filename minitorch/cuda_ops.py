@@ -448,6 +448,7 @@ def _tensor_matrix_multiply(
     idx_z = cuda.blockIdx.z * cuda.blockDim.z + cuda.threadIdx.z
 
     shm_c = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    shm_c[pi][pj] = 0.0
 
     shm_a = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     shm_b = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
