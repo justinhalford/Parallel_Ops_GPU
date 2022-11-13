@@ -364,16 +364,16 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
     if x >= size or y >= size:
         return
-    aM = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
-    bM = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
-    pos = index_to_position((x, y), (size, 1))
-    aM[x][y] = a[pos]
-    bM[x][y] = b[pos]
+    a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    position = index_to_position((x, y), (size, 1))
+    a_shared[x][y] = a[position]
+    b_shared[x][y] = b[position]
     cuda.syncthreads()
     total = 0.0
     for i in range(size):
-        total += aM[x][i] * bM[i][y]
-    out[pos] = total
+        total += a_shared[x][i] * b_shared[i][y]
+    out[position] = total
     #raise NotImplementedError("Need to implement for Task 3.3")
 
 
