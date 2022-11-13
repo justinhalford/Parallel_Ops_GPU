@@ -85,7 +85,7 @@ Epoch:  460 	Loss:  0.2347959 	Correct: 50 	Time per epoch: 2.12  seconds
 Epoch:  470 	Loss:  0.2125934 	Correct: 50 	Time per epoch: 2.12  seconds
 Epoch:  480 	Loss:  0.1527142 	Correct: 50 	Time per epoch: 2.12  seconds
 Epoch:  490 	Loss:  0.4451058 	Correct: 50 	Time per epoch: 2.11  seconds
-AVERAGE TIME PER EPOCH:  2.12  seconds
+AVERAGE TIME PER EPOCH:  2.09  seconds
 
 CPU
 Script: python run_fast_tensor.py --BACKEND cpu --HIDDEN 100 --DATASET split --RATE 0.05
@@ -142,4 +142,55 @@ Epoch:  490 	Loss:  0.1662803 	Correct: 50 	Time per epoch: 1.5  seconds
 AVERAGE TIME PER EPOCH:  1.44  seconds
 
 GPU - LARGER MODEL
-Script: python run_fast_tensor.py --BACKEND cpu --HIDDEN 1000 --DATASET split --RATE 0.05
+Script: python run_fast_tensor.py --BACKEND cpu --HIDDEN 250 --DATASET split --RATE 0.05
+Epoch:  0 	Loss:  40.4289123 	Correct: 26 	Time per epoch: 0.63  seconds
+Epoch:  10 	Loss:  3.7904395 	Correct: 43 	Time per epoch: 2.25  seconds
+Epoch:  20 	Loss:  3.1538177 	Correct: 43 	Time per epoch: 2.26  seconds
+Epoch:  30 	Loss:  1.8133609 	Correct: 47 	Time per epoch: 2.27  seconds
+Epoch:  40 	Loss:  3.031231 	Correct: 47 	Time per epoch: 2.26  seconds
+Epoch:  50 	Loss:  1.1275088 	Correct: 48 	Time per epoch: 2.26  seconds
+Epoch:  60 	Loss:  0.6576759 	Correct: 49 	Time per epoch: 2.26  seconds
+Epoch:  70 	Loss:  3.1186411 	Correct: 48 	Time per epoch: 2.25  seconds
+Epoch:  80 	Loss:  3.0524176 	Correct: 48 	Time per epoch: 2.26  seconds
+Epoch:  90 	Loss:  1.8591487 	Correct: 48 	Time per epoch: 2.25  seconds
+Epoch:  100 	Loss:  2.9593964 	Correct: 47 	Time per epoch: 2.25  seconds
+Epoch:  110 	Loss:  1.6874119 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  120 	Loss:  0.3577296 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  130 	Loss:  0.8196006 	Correct: 49 	Time per epoch: 2.26  seconds
+Epoch:  140 	Loss:  1.2199134 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  150 	Loss:  0.3603652 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  160 	Loss:  0.4557673 	Correct: 49 	Time per epoch: 2.26  seconds
+Epoch:  170 	Loss:  0.2399357 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  180 	Loss:  0.486752 	Correct: 49 	Time per epoch: 2.25  seconds
+Epoch:  190 	Loss:  1.6848536 	Correct: 49 	Time per epoch: 2.25  seconds
+Epoch:  200 	Loss:  0.2724246 	Correct: 49 	Time per epoch: 2.26  seconds
+Epoch:  210 	Loss:  1.5931497 	Correct: 48 	Time per epoch: 2.25  seconds
+Epoch:  220 	Loss:  0.2149285 	Correct: 49 	Time per epoch: 2.25  seconds
+Epoch:  230 	Loss:  0.3252945 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  240 	Loss:  1.6390974 	Correct: 49 	Time per epoch: 2.25  seconds
+Epoch:  250 	Loss:  0.889793 	Correct: 49 	Time per epoch: 2.25  seconds
+Epoch:  260 	Loss:  0.2399558 	Correct: 49 	Time per epoch: 2.25  seconds
+Epoch:  270 	Loss:  0.6206427 	Correct: 50 	Time per epoch: 2.26  seconds
+Epoch:  280 	Loss:  0.1538105 	Correct: 49 	Time per epoch: 2.25  seconds
+Epoch:  290 	Loss:  0.1448247 	Correct: 50 	Time per epoch: 2.26  seconds
+Epoch:  300 	Loss:  0.4177541 	Correct: 49 	Time per epoch: 2.25  seconds
+Epoch:  310 	Loss:  0.7999527 	Correct: 49 	Time per epoch: 2.25  seconds
+Epoch:  320 	Loss:  1.085701 	Correct: 50 	Time per epoch: 2.26  seconds
+Epoch:  330 	Loss:  0.2187044 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  340 	Loss:  0.643253 	Correct: 50 	Time per epoch: 2.26  seconds
+Epoch:  350 	Loss:  0.5215887 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  360 	Loss:  0.4059418 	Correct: 50 	Time per epoch: 2.26  seconds
+Epoch:  370 	Loss:  0.0194751 	Correct: 50 	Time per epoch: 2.26  seconds
+Epoch:  380 	Loss:  0.0226324 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  390 	Loss:  0.2637746 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  400 	Loss:  0.297469 	Correct: 50 	Time per epoch: 2.26  seconds
+Epoch:  410 	Loss:  0.1043882 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  420 	Loss:  0.1247114 	Correct: 50 	Time per epoch: 2.26  seconds
+Epoch:  430 	Loss:  0.0162713 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  440 	Loss:  0.372408 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  450 	Loss:  0.0401251 	Correct: 50 	Time per epoch: 2.27  seconds
+Epoch:  460 	Loss:  0.5023019 	Correct: 50 	Time per epoch: 2.24  seconds
+Epoch:  470 	Loss:  0.3292899 	Correct: 50 	Time per epoch: 2.26  seconds
+Epoch:  480 	Loss:  0.3996228 	Correct: 50 	Time per epoch: 2.25  seconds
+Epoch:  490 	Loss:  0.3587235 	Correct: 50 	Time per epoch: 2.25  seconds
+AVERAGE TIME PER EPOCH:  2.21  seconds
