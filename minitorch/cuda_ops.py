@@ -447,14 +447,14 @@ def _tensor_matrix_multiply(
     #c_shared will gradually accumulate the pairwise products since we are running matmul concurrently
     c_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     c_shared[pi][pj] = 0.0
-    bX, bY = cuda.blockIdx.x, cuda.blockIdx.y
+    bX, bY, k = cuda.blockIdx.x, cuda.blockIdx.y, cuda.blockIdx.z * cuda.blockDim.z + cuda.threadIdx.z
     for m in range((a_shape[-1] + BLOCK_DIM - 1) // BLOCK_DIM):
         #Copy into shared memory for a matrix
-        iA, jA = bX * BLOCK_DIM + pi, m * BLOCK_DIM + pj
-        a_shared[pi][pj] = (a_storage[index_to_position((iA, jA), a_strides)] if iA < a_shape[1] and jA < a_shape[2] else 0.0)
+        iA, jA, kA = bX * BLOCK_DIM + pi, m * BLOCK_DIM + pj, (k if out_shape[0] == a_shape[0] else 0)
+        a_shared[pi][pj] = (a_storage[index_to_position((kA, iA, jA), a_strides)] if iA < a_shape[1] and jA < a_shape[2] else 0.0)
         #Copy into shared memory for b matrix
-        iB, jB = m * BLOCK_DIM + pi, bY * BLOCK_DIM + pj
-        b_shared[pi][pj] = (b_storage[index_to_position((iB, jB), b_strides)] if iB < b_shape[1] and jB < b_shape[2] else 0.0)
+        iB, jB, kB = m * BLOCK_DIM + pi, bY * BLOCK_DIM + pj, (k if out_shape[0] == b_shape[0] else 0)
+        b_shared[pi][pj] = (b_storage[index_to_position((kB, iB, jB), b_strides)] if iB < b_shape[1] and jB < b_shape[2] else 0.0)
         #Ensure that a_shared and b_shared have been fully populated by all threads before matmul
         cuda.syncthreads()
         for n in range(BLOCK_DIM):
@@ -463,7 +463,7 @@ def _tensor_matrix_multiply(
         #Need to wait for all threads from all blocks
         cuda.syncthreads()
     #Fill in out with c[pi][pj] values
-    if i < out_shape[1] and j < out_shape[2]:
+    if i < out_shape[1] and j < out_shape[2] and k < out_shape[0]:
         out[index_to_position((k, i, j), out_strides)] = c_shared[pi][pj]
     #raise NotImplementedError("Need to implement for Task 3.4")
 
