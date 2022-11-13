@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import Iterable, Optional, Sequence, Tuple, Union
+from typing import Iterable, Optional, Sequence, Tuple, Union, Any
 
 import numba
 import numpy as np
@@ -30,7 +30,7 @@ UserShape: TypeAlias = Sequence[int]
 UserStrides: TypeAlias = Sequence[int]
 
 
-def index_to_position(index, strides) -> int:
+def index_to_position(index: Any, strides: Any) -> int:
     """
     Converts a multidimensional tensor `index` into a single-dimensional position in
     storage based on strides.
