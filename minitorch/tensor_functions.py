@@ -5,7 +5,6 @@ Implementation of the autodifferentiation Functions for Tensor.
 from __future__ import annotations
 
 import random
-#from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -14,6 +13,9 @@ import minitorch
 from . import operators
 from .autodiff import Context
 from .tensor_ops import SimpleBackend, TensorBackend
+
+# from typing import TYPE_CHECKING
+
 
 if TYPE_CHECKING:
     from typing import Any, List, Tuple
