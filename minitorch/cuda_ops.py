@@ -461,7 +461,7 @@ def _tensor_matrix_multiply(
         cuda.syncthreads()
     #Fill in out with c[pi][pj] values
     if i < out_shape[1] and j < out_shape[2]:
-        out[index_to_position((j, i), out_strides)] = c_shared[pi][pj]
+        out[index_to_position((k, i, j), out_strides)] = c_shared[pi][pj]
     #raise NotImplementedError("Need to implement for Task 3.4")
 
 
