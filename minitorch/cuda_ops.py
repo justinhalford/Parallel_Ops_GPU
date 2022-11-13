@@ -451,10 +451,10 @@ def _tensor_matrix_multiply(
     bX, bY, k = cuda.blockIdx.x, cuda.blockIdx.y, cuda.blockIdx.z * cuda.blockDim.z + cuda.threadIdx.z
     for m in range((a_shape[-1] + BLOCK_DIM - 1) // BLOCK_DIM):
         #Copy into shared memory for a matrix
-        iA, jA, kA = bX * BLOCK_DIM + pi, m * BLOCK_DIM + pj, (k if out_shape[0] == a_shape[0] else 0)
+        iA, jA, kA = bX * BLOCK_DIM + pi, m * BLOCK_DIM + pj, (k if out_shape[0] == a_shape[0] else 0.0)
         a_shared[pi][pj] = (a_storage[index_to_position((kA, iA, jA), a_strides)] if iA < a_shape[1] and jA < a_shape[2] else 0.0)
         #Copy into shared memory for b matrix
-        iB, jB, kB = m * BLOCK_DIM + pi, bY * BLOCK_DIM + pj, (k if out_shape[0] == b_shape[0] else 0)
+        iB, jB, kB = m * BLOCK_DIM + pi, bY * BLOCK_DIM + pj, (k if out_shape[0] == b_shape[0] else 0.0)
         b_shared[pi][pj] = (b_storage[index_to_position((kB, iB, jB), b_strides)] if iB < b_shape[1] and jB < b_shape[2] else 0.0)
         #Ensure that a_shared and b_shared have been fully populated by all threads before matmul
         cuda.syncthreads()
