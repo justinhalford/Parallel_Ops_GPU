@@ -1,7 +1,7 @@
 import random
+import time
 
 import numba
-import time
 
 import minitorch
 
@@ -12,9 +12,19 @@ if numba.cuda.is_available():
 
 
 def default_log_fn(epoch, total_loss, correct, losses, seconds, split):
-    print("Epoch: ", epoch,  "\tLoss: ", round(total_loss, 7), "\tCorrect:", correct, "\tTime per epoch:", round(split/10, 2), " seconds")
+    print(
+        "Epoch: ",
+        epoch,
+        "\tLoss: ",
+        round(total_loss, 7),
+        "\tCorrect:",
+        correct,
+        "\tTime per epoch:",
+        round(split / 10, 2),
+        " seconds",
+    )
     if epoch == 490:
-        print("AVERAGE TIME PER EPOCH: ", round(seconds/500), " seconds")
+        print("AVERAGE TIME PER EPOCH: ", round(seconds / 500), " seconds")
 
 
 def RParam(*shape, backend):
@@ -36,7 +46,7 @@ class Network(minitorch.Module):
         h1 = self.layer1.forward(x).relu()
         h2 = self.layer2.forward(h1).relu()
         return self.layer3.forward(h2).sigmoid()
-        #raise NotImplementedError("Need to implement for Task 3.5")
+        # raise NotImplementedError("Need to implement for Task 3.5")
 
 
 class Linear(minitorch.Module):
@@ -51,7 +61,7 @@ class Linear(minitorch.Module):
     def forward(self, x):
         # TODO: Implement for Task 3.5.
         return x @ self.weights.value + self.bias.value
-        #raise NotImplementedError("Need to implement for Task 3.5")
+        # raise NotImplementedError("Need to implement for Task 3.5")
 
 
 class FastTrain:
@@ -103,9 +113,15 @@ class FastTrain:
                 out = self.model.forward(X).view(y.shape[0])
                 y2 = minitorch.tensor(data.y)
                 correct = int(((out.detach() > 0.5) == y2).sum()[0])
-                log_fn(epoch, total_loss, correct, losses, time.time() - self.start, time.time() - last)
+                log_fn(
+                    epoch,
+                    total_loss,
+                    correct,
+                    losses,
+                    time.time() - self.start,
+                    time.time() - last,
+                )
                 last = time.time()
-
 
 
 if __name__ == "__main__":

@@ -108,7 +108,7 @@ class Mul(Function):
         # TODO: Implement for Task 2.4.
         a, b = ctx.saved_values
         return (
-            grad_output.f.mul_zip(grad_output, b), 
+            grad_output.f.mul_zip(grad_output, b),
             grad_output.f.mul_zip(grad_output, a),
         )
 
@@ -122,9 +122,9 @@ class Sigmoid(Function):
         return out
 
     @staticmethod
-    def backward(ctx: Context, grad_output: Tensor) -> Any:
+    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
         # TODO: Implement for Task 2.4.
-        sigma = ctx.saved_values[0]
+        sigma: Tensor = ctx.saved_values[0]
         return sigma * (-sigma + 1.0) * grad_output
 
 
@@ -136,7 +136,7 @@ class ReLU(Function):
         return t1.f.relu_map(t1)
 
     @staticmethod
-    def backward(ctx: Context, grad_output: Tensor) -> Any:
+    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
         # TODO: Implement for Task 2.4.
         (t1,) = ctx.saved_values
         return grad_output.f.relu_back_zip(t1, grad_output)
@@ -150,7 +150,7 @@ class Log(Function):
         return t1.f.log_map(t1)
 
     @staticmethod
-    def backward(ctx: Context, grad_output: Tensor) -> Any:
+    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
         # TODO: Implement for Task 2.4.
         (t1,) = ctx.saved_values
         return grad_output.f.log_back_zip(t1, grad_output)
@@ -165,7 +165,7 @@ class Exp(Function):
         return ret
 
     @staticmethod
-    def backward(ctx: Context, grad_output: Tensor) -> Any:
+    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
         # TODO: Implement for Task 2.4.
         (t1,) = ctx.saved_values
         return grad_output.f.mul_zip(t1, grad_output)
@@ -241,7 +241,7 @@ class Permute(Function):
         order2: List[int] = [
             a[0]
             for a in sorted(
-                enumerate([order[i] for i in range(order.size)]), key = lambda a: a[1]
+                enumerate([order[i] for i in range(order.size)]), key=lambda a: a[1]
             )
         ]
         return grad_output._new(grad_output._tensor.permute(*order2)), 0.0

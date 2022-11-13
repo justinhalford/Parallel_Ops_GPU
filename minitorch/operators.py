@@ -62,7 +62,7 @@ def max(x: float, y: float) -> float:
 def is_close(x: float, y: float) -> float:
     "$f(x) = |x - y| < 1e-2$"
     # TODO: Implement for Task 0.1.
-    return (x-y < 1e-2) and (y-x < 1e-2)
+    return (x - y < 1e-2) and (y - x < 1e-2)
     # raise NotImplementedError("Need to implement for Task 0.1")
 
 
@@ -171,7 +171,7 @@ def map(fn: Callable[[float], float]) -> Callable[[Iterable[float]], Iterable[fl
         for x in ls:
             ret.append(fn(x))
         return ret
-    
+
     return _map
     # raise NotImplementedError("Need to implement for Task 0.3")
 

@@ -85,7 +85,7 @@ class TensorBackend:
         self.log_back_zip = ops.zip(operators.log_back)
         self.inv_back_zip = ops.zip(operators.inv_back)
         # Added to maintain consistency for 2.4
-        #self.sigmoid_back_zip = ops.zip(operators.sigmoid_back)
+        # self.sigmoid_back_zip = ops.zip(operators.sigmoid_back)
 
         # Reduce
         self.add_reduce = ops.reduce(operators.add, 0.0)

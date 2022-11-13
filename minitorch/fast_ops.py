@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
+# import numpy as np
 from numba import njit, prange
 
-from .tensor_data import (
-    MAX_DIMS,
+from .tensor_data import (  # MAX_DIMS,
     broadcast_index,
     index_to_position,
     shape_broadcast,
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
     from typing import Callable, Optional
 
     from .tensor import Tensor
-    from .tensor_data import Index, Shape, Storage, Strides
+    from .tensor_data import Shape, Storage, Strides  # , Index
 
 # TIP: Use `NUMBA_DISABLE_JIT=1 pytest tests/ -m task3_1` to run these tests without JIT.
 
@@ -168,7 +167,7 @@ def tensor_map(
             out_position = index_to_position(out_index, out_strides)
             result = fn(in_storage[in_position])
             out[out_position] = result
-        #raise NotImplementedError("Need to implement for Task 3.1")
+        # raise NotImplementedError("Need to implement for Task 3.1")
 
     return njit(parallel=True)(_map)  # type: ignore
 
@@ -208,16 +207,20 @@ def tensor_zip(
     ) -> None:
         # TODO: Implement for Task 3.1.
         for i in prange(len(out)):
-            a_index, b_index, out_index = a_shape.copy(), b_shape.copy(), out_shape.copy()
+            a_index, b_index, out_index = (
+                a_shape.copy(),
+                b_shape.copy(),
+                out_shape.copy(),
+            )
             to_index(i, out_shape, out_index)
             broadcast_index(out_index, out_shape, a_shape, a_index)
             broadcast_index(out_index, out_shape, b_shape, b_index)
             a_position = index_to_position(a_index, a_strides)
             b_position = index_to_position(b_index, b_strides)
             out_position = index_to_position(out_index, out_strides)
-            result = fn(a_storage[a_position], b_storage[b_position]) 
+            result = fn(a_storage[a_position], b_storage[b_position])
             out[out_position] = result
-        #raise NotImplementedError("Need to implement for Task 3.1")
+        # raise NotImplementedError("Need to implement for Task 3.1")
 
     return njit(parallel=True)(_zip)  # type: ignore
 
@@ -260,10 +263,11 @@ def tensor_reduce(
                 a_index[reduce_dim] = j
                 a_position = index_to_position(a_index, a_strides)
                 out[out_position] = (
-                    fn(out[out_position], a_storage[a_position]) if j != 0 
+                    fn(out[out_position], a_storage[a_position])
+                    if j != 0
                     else a_storage[a_position]
                 )
-        #raise NotImplementedError("Need to implement for Task 3.1")
+        # raise NotImplementedError("Need to implement for Task 3.1")
 
     return njit(parallel=True)(_reduce)  # type: ignore
 
@@ -309,8 +313,8 @@ def _tensor_matrix_multiply(
     Returns:
         None : Fills in `out`
     """
-    a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
-    b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
+    # a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
+    # b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
 
     # TODO: Implement for Task 3.2.
     assert a_shape[-1] == b_shape[-2]
@@ -328,7 +332,7 @@ def _tensor_matrix_multiply(
             b_position = index_to_position(b_index, b_strides)
             a_comp, b_comp = a_storage[a_position], b_storage[b_position]
             out[out_position] += a_comp * b_comp
-    ###raise NotImplementedError("Need to implement for Task 3.2")
+    # raise NotImplementedError("Need to implement for Task 3.2")
 
 
 tensor_matrix_multiply = njit(parallel=True, fastmath=True)(_tensor_matrix_multiply)
