@@ -366,14 +366,15 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
 
     if x >= size or y >= size:
         return
-
+        
     pos = index_to_position((x, y), (size, 1))
     m1[x][y] = a[pos]
     m2[x][y] = b[pos]
 
     cuda.syncthreads()
     
-    sum = 0
+    
+    sum = 0.0
     for i in range(size):
         sum += m1[x][i] * m2[y][i]
     out[pos] = sum
