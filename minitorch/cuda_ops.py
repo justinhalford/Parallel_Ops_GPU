@@ -446,6 +446,7 @@ def _tensor_matrix_multiply(
     assert a_shape[-1] == b_shape[-2]
     #c_shared will gradually accumulate the pairwise products since we are running matmul concurrently
     c_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    #Initialize values in c_shared to 0.0, using thread's location on the block. Some redundancy, not issue given use of syncthreads.
     c_shared[pi][pj] = 0.0
     bX, bY, k = cuda.blockIdx.x, cuda.blockIdx.y, cuda.blockIdx.z * cuda.blockDim.z + cuda.threadIdx.z
     for m in range((a_shape[-1] + BLOCK_DIM - 1) // BLOCK_DIM):
