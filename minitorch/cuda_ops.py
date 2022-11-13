@@ -369,7 +369,6 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     for i in range(size):
         sum += a_shared[x][i] * b_shared[i][y]
     out[position] = sum
-    #raise NotImplementedError("Need to implement for Task 3.3")
 
 
 jit_mm_practice = cuda.jit()(_mm_practice)
