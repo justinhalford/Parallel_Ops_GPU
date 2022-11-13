@@ -5,7 +5,7 @@ Implementation of the autodifferentiation Functions for Tensor.
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+#from typing import TYPE_CHECKING
 
 import numpy as np
 
