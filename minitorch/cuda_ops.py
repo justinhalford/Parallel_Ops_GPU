@@ -358,7 +358,6 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
         size (int): size of the square
     """
     BLOCK_DIM = 32
-    
     # TODO: Implement for Task 3.3.
     x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
     y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
