@@ -452,24 +452,24 @@ def _tensor_matrix_multiply(
     bX = cuda.blockIdx.x
     bY = cuda.blockIdx.y
     count = (a_shape[-1] + BLOCK_DIM - 1) // BLOCK_DIM
-    for i in range(count):
+    for m in range(count):
         # Block-(?, blockIdx.x, i) in a
         x_a = bX * BLOCK_DIM + pi
-        y_a = i * BLOCK_DIM + pj
+        y_a = m * BLOCK_DIM + pj
         z_a = (idx_z if out_shape[0] == a_shape[0] else 0)
         a_shared[pi][pj] = (a_storage[index_to_position((z_a, x_a, y_a), a_strides)] if x_a < a_shape[1] and y_a < a_shape[2] else 0.0)
         
 
         # Block (?, i, blockIdx.y) in b
-        x_b = i * BLOCK_DIM + pi
+        x_b = m * BLOCK_DIM + pi
         y_b = bY * BLOCK_DIM + pj
         z_b = (idx_z if out_shape[0] == b_shape[0] else 0)
         b_shared[pi][pj] = (b_storage[index_to_position((z_b, x_b, y_b), b_strides)] if x_b < b_shape[1] and y_b < b_shape[2] else 0.0)
 
         cuda.syncthreads()
 
-        for j in range(BLOCK_DIM):
-            c_shared[pi][pj] += a_shared[pi][j] * b_shared[j][pj]
+        for n in range(BLOCK_DIM):
+            c_shared[pi][pj] += a_shared[pi][n] * b_shared[n][pj]
 
         cuda.syncthreads()
 
