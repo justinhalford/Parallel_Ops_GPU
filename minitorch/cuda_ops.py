@@ -443,26 +443,23 @@ def _tensor_matrix_multiply(
     #    b) Copy into shared memory for b matrix
     #    c) Compute the dot produce for position c[i, j]
     # TODO: Implement for Task 3.4.
+    assert a_shape[-1] == b_shape[-2]
+    
     c_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     c_shared[pi][pj] = 0.0
     bX, bY, k = cuda.blockIdx.x, cuda.blockIdx.y, cuda.blockIdx.z * cuda.blockDim.z + cuda.threadIdx.z
-    count = (a_shape[-1] + BLOCK_DIM - 1) // BLOCK_DIM
-    for m in range(count):
+    for m in range((a_shape[-1] + BLOCK_DIM - 1) // BLOCK_DIM):
         iA, jA, kA = bX * BLOCK_DIM + pi, m * BLOCK_DIM + pj, (k if out_shape[0] == a_shape[0] else 0)
-        a_shared[pi][pj] = (a_storage[index_to_position((kA, iA, jA), a_strides)] if iA < a_shape[1] and jA < a_shape[2] else 0.0)
-        
+        a_shared[pi][pj] = (a_storage[index_to_position((iA, jA, kA), a_strides)] if iA < a_shape[0] and jA < a_shape[1] else 0.0)
         iB, jB, kB = m * BLOCK_DIM + pi, bY * BLOCK_DIM + pj, (k if out_shape[0] == b_shape[0] else 0)
-        b_shared[pi][pj] = (b_storage[index_to_position((kB, iB, jB), b_strides)] if iB < b_shape[1] and jB < b_shape[2] else 0.0)
-
+        b_shared[pi][pj] = (b_storage[index_to_position((iB, jB, kB), b_strides)] if iB < b_shape[0] and jB < b_shape[1] else 0.0)
         cuda.syncthreads()
-
         for n in range(BLOCK_DIM):
             c_shared[pi][pj] += a_shared[pi][n] * b_shared[n][pj]
-
         cuda.syncthreads()
-
-    if k < out_shape[0] and i < out_shape[1] and j < out_shape[2]:
-        out[index_to_position((k, i, j), out_strides)] = c_shared[pi][pj]
+    #Fill in out with c[pi][pj] values
+    if k < out_shape[2] and i < out_shape[0] and j < out_shape[1]:
+        out[index_to_position((i, j, k), out_strides)] = c_shared[pi][pj]
     #raise NotImplementedError("Need to implement for Task 3.4")
 
 
