@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import Iterable, Optional, Sequence, Tuple, Union, Any
+from typing import Any, Iterable, Optional, Sequence, Tuple, Union
 
 import numba
 import numpy as np
