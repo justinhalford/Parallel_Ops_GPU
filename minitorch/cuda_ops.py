@@ -458,8 +458,10 @@ def _tensor_matrix_multiply(
         #Ensure that a_shared and b_shared have been fully populated by all threads before matmul
         cuda.syncthreads()
         for n in range(BLOCK_DIM):
-            #Matmul with a column of a_shared * a row of b_shared, per thread. Dot product.
+            #Matmul with a column of a_shared * a row of b_shared, indexed by thread's position
             c_shared[pi][pj] += a_shared[pi][n] * b_shared[n][pj]
+        #Need to wait for all threads from all blocks
+        cuda.syncthreads()
     #Fill in out with c[pi][pj] values
     if i < out_shape[1] and j < out_shape[2] and k < out_shape[0]:
         out[index_to_position((k, i, j), out_strides)] = c_shared[pi][pj]
