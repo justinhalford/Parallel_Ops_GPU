@@ -160,9 +160,8 @@ def tensor_map(
             to_index(i, out_shape, out_index)
             broadcast_index(out_index, out_shape, in_shape, in_index)
             in_position = index_to_position(in_index, in_strides)
-            result = fn(in_storage[in_position])
             out_position = index_to_position(out_index, out_strides)
-            out[out_position] = result
+            out[out_position] = fn(in_storage[in_position])
        #raise NotImplementedError("Need to implement for Task 3.3")
 
     return cuda.jit()(_map)  # type: ignore
@@ -213,9 +212,8 @@ def tensor_zip(
             broadcast_index(out_index, out_shape, b_shape, b_index)
             a_position = index_to_position(a_index, a_strides)
             b_position = index_to_position(b_index, b_strides)
-            a_comp = a_storage[a_position]
-            b_comp = b_storage[b_position]
             out_position = index_to_position(out_index, out_strides)
+            a_comp, b_comp = a_storage[a_position], b_storage[b_position]
             out[out_position] = fn(a_comp, b_comp)
         #raise NotImplementedError("Need to implement for Task 3.3")
 

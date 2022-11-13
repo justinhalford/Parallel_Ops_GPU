@@ -161,8 +161,7 @@ def tensor_map(
     ) -> None:
         # TODO: Implement for Task 3.1.
         for i in prange(len(out)):
-            in_index = in_shape.copy()
-            out_index = out_shape.copy()
+            in_index, out_index = in_shape.copy(), out_shape.copy()
             to_index(i, out_shape, out_index)
             broadcast_index(out_index, out_shape, in_shape, in_index)
             in_position = index_to_position(in_index, in_strides)
@@ -209,9 +208,7 @@ def tensor_zip(
     ) -> None:
         # TODO: Implement for Task 3.1.
         for i in prange(len(out)):
-            a_index = a_shape.copy()
-            b_index = b_shape.copy()
-            out_index = out_shape.copy()
+            a_index, b_index, out_index = a_shape.copy(), b_shape.copy(), out_shape.copy()
             to_index(i, out_shape, out_index)
             broadcast_index(out_index, out_shape, a_shape, a_index)
             broadcast_index(out_index, out_shape, b_shape, b_index)
@@ -255,7 +252,6 @@ def tensor_reduce(
     ) -> None:
         # TODO: Implement for Task 3.1.
         for i in prange(len(out)):
-            a_index = a_shape.copy()
             out_index = out_shape.copy()
             to_index(i, out_shape, out_index)
             a_index = out_index
@@ -263,11 +259,10 @@ def tensor_reduce(
             for j in range(a_shape[reduce_dim]):
                 a_index[reduce_dim] = j
                 a_position = index_to_position(a_index, a_strides)
-                if j != 0:
-                    result = fn(out[out_position], a_storage[a_position])
-                    out[out_position] = result
-                else:
-                    out[out_position] = a_storage[a_position]          
+                out[out_position] = (
+                    fn(out[out_position], a_storage[a_position]) if j != 0 
+                    else a_storage[a_position]
+                )
         #raise NotImplementedError("Need to implement for Task 3.1")
 
     return njit(parallel=True)(_reduce)  # type: ignore
@@ -314,8 +309,8 @@ def _tensor_matrix_multiply(
     Returns:
         None : Fills in `out`
     """
-    #a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
-    #b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
+    a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
+    b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
 
     # TODO: Implement for Task 3.2.
     assert a_shape[-1] == b_shape[-2]
@@ -324,18 +319,14 @@ def _tensor_matrix_multiply(
         to_index(i, out_shape, out_index)
         out_position = index_to_position(out_index, out_strides)
         for j in prange(a_shape[-1]):
-            a_index_ = out_index.copy()
-            b_index_ = out_index.copy()
-            a_index_[-1] = j
-            b_index_[-2] = j
-            a_index = a_shape.copy()
+            a_index_, b_index_ = out_index.copy(), out_index.copy()
+            a_index_[-1], b_index_[-2] = j, j
+            a_index, b_index = a_shape.copy(), b_shape.copy()
             broadcast_index(a_index_, out_shape, a_shape, a_index)
             a_position = index_to_position(a_index, a_strides)
-            a_comp = a_storage[a_position]
-            b_index = b_shape.copy()
             broadcast_index(b_index_, out_shape, b_shape, b_index)
             b_position = index_to_position(b_index, b_strides)
-            b_comp = b_storage[b_position]
+            a_comp, b_comp = a_storage[a_position], b_storage[b_position]
             out[out_position] += a_comp * b_comp
     ###raise NotImplementedError("Need to implement for Task 3.2")
 
