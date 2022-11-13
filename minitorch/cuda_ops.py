@@ -447,43 +447,42 @@ def _tensor_matrix_multiply(
     idx_y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
     idx_z = cuda.blockIdx.z * cuda.blockDim.z + cuda.threadIdx.z
 
-    shm_c = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
-    shm_c[pi][pj] = 0.0
-
-    shm_a = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
-    shm_b = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    c_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    c_shared[pi][pj] = 0.0
+    bX = cuda.blockIdx.x
+    bY = cuda.blockIdx.y
     count = (a_shape[-1] + BLOCK_DIM - 1) // BLOCK_DIM
     for i in range(count):
         # Block-(?, blockIdx.x, i) in a
-        x_a = cuda.blockIdx.x * BLOCK_DIM + cuda.threadIdx.x
-        y_a = i * BLOCK_DIM + cuda.threadIdx.y
+        x_a = bX * BLOCK_DIM + pi
+        y_a = i * BLOCK_DIM + pj
         z_a = (idx_z if out_shape[0] == a_shape[0] else 0)
         if x_a < a_shape[1] and y_a < a_shape[2]:
             a_position = index_to_position((z_a, x_a, y_a), a_strides)
-            a_shared[cuda.threadIdx.x][cuda.threadIdx.y] = a_storage[a_position]
+            a_shared[pi][pj] = a_storage[a_position]
         else:
-            a_shared[cuda.threadIdx.x][cuda.threadIdx.y] = 0.0
+            a_shared[pi][pj] = 0.0
 
         # Block (?, i, blockIdx.y) in b
-        x_b = i * BLOCK_DIM + cuda.threadIdx.x
-        y_b = cuda.blockIdx.y * BLOCK_DIM + cuda.threadIdx.y
+        x_b = i * BLOCK_DIM + pi
+        y_b = bY * BLOCK_DIM + pj
         z_b = (idx_z if out_shape[0] == b_shape[0] else 0)
         if x_b < b_shape[1] and y_b < b_shape[2]:
             b_position = index_to_position((z_b, x_b, y_b), b_strides)
-            b_shared[cuda.threadIdx.x][cuda.threadIdx.y] = b_storage[b_position]
+            b_shared[pi][pj] = b_storage[b_position]
         else:
-            b_shared[cuda.threadIdx.x][cuda.threadIdx.y] = 0.0
+            b_shared[pi][pj] = 0.0
 
         cuda.syncthreads()
 
         for j in range(BLOCK_DIM):
-            shm_c[pi][pj] += a_shared[pi][j] * b_shared[j][pj]
+            c_shared[pi][pj] += a_shared[pi][j] * b_shared[j][pj]
 
         cuda.syncthreads()
 
     if idx_z < out_shape[0] and idx_x < out_shape[1] and idx_y < out_shape[2]:
         pos = index_to_position((idx_z, idx_x, idx_y), out_strides)
-        out[pos] = shm_c[pi][pj]
+        out[pos] = c_shared[pi][pj]
     #raise NotImplementedError("Need to implement for Task 3.4")
 
 
