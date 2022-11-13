@@ -365,6 +365,8 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
 
     x = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
     y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
+    if x >= size or y >= size:
+        return
     
     pos = index_to_position((x, y), (size, 1))
     aM[x][y] = a[pos]
