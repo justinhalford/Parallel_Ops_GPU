@@ -1,6 +1,7 @@
 import random
 
 import numba
+import time
 
 import minitorch
 
@@ -10,8 +11,8 @@ if numba.cuda.is_available():
     GPUBackend = minitorch.TensorBackend(minitorch.CudaOps)
 
 
-def default_log_fn(epoch, total_loss, correct, losses):
-    print("Epoch ", epoch, " loss ", total_loss, "correct", correct)
+def default_log_fn(epoch, total_loss, correct, losses, seconds):
+    print("Epoch ", epoch, " loss ", total_loss, "correct", correct, "time elapsed (seconds)", seconds)
 
 
 def RParam(*shape, backend):
@@ -56,6 +57,7 @@ class FastTrain:
         self.hidden_layers = hidden_layers
         self.model = Network(hidden_layers, backend)
         self.backend = backend
+        self.start = time.time()
 
     def run_one(self, x):
         return self.model.forward(minitorch.tensor([x], backend=self.backend))
@@ -64,7 +66,6 @@ class FastTrain:
         return self.model.forward(minitorch.tensor(X, backend=self.backend))
 
     def train(self, data, learning_rate, max_epochs=500, log_fn=default_log_fn):
-
         self.model = Network(self.hidden_layers, self.backend)
         optim = minitorch.SGD(self.model.parameters(), learning_rate)
         BATCH = 10
@@ -100,7 +101,7 @@ class FastTrain:
                 out = self.model.forward(X).view(y.shape[0])
                 y2 = minitorch.tensor(data.y)
                 correct = int(((out.detach() > 0.5) == y2).sum()[0])
-                log_fn(epoch, total_loss, correct, losses)
+                log_fn(epoch, total_loss, correct, losses, time.time() - self.start)
 
 
 if __name__ == "__main__":
