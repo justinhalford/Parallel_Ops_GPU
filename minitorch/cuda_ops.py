@@ -1,5 +1,4 @@
 from typing import Callable, Optional
-import numpy as np
 import numba
 from numba import cuda
 
@@ -361,7 +360,6 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
     if x >= size or y >= size:
         return
-    #location = np.array([x, y], np.int32)
     a_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     b_shared = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     position = index_to_position((x, y), (size, 1))
@@ -371,7 +369,7 @@ def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     for i in range(size):
         sum += a_shared[x][i] * b_shared[i][y]
     out[position] = sum
-    # raise NotImplementedError("Need to implement for Task 3.3")
+    #raise NotImplementedError("Need to implement for Task 3.3")
 
 
 jit_mm_practice = cuda.jit()(_mm_practice)
