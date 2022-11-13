@@ -447,16 +447,16 @@ def _tensor_matrix_multiply(
     idx_y = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
     idx_z = cuda.blockIdx.z * cuda.blockDim.z + cuda.threadIdx.z
 
-    shm_c = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
+    shm_c = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     shm_c[cuda.threadIdx.x][cuda.threadIdx.y] = 0.0
 
-    shm_a = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
-    shm_b = cuda.shared.array((THREADS_PER_BLOCK, THREADS_PER_BLOCK), numba.float64)
-    count = (a_shape[-1] + THREADS_PER_BLOCK - 1) // THREADS_PER_BLOCK
+    shm_a = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    shm_b = cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    count = (a_shape[-1] + BLOCK_DIM - 1) // BLOCK_DIM
     for i in range(count):
         # Block-(?, blockIdx.x, i) in a
-        x_a = cuda.blockIdx.x * THREADS_PER_BLOCK + cuda.threadIdx.x
-        y_a = i * THREADS_PER_BLOCK + cuda.threadIdx.y
+        x_a = cuda.blockIdx.x * BLOCK_DIM + cuda.threadIdx.x
+        y_a = i * BLOCK_DIM + cuda.threadIdx.y
         z_a = (idx_z if out_shape[0] == a_shape[0] else 0)
         if x_a < a_shape[1] and y_a < a_shape[2]:
             pos_a = index_to_position((z_a, x_a, y_a), a_strides)
@@ -465,8 +465,8 @@ def _tensor_matrix_multiply(
             shm_a[cuda.threadIdx.x][cuda.threadIdx.y] = 0.0
 
         # Block (?, i, blockIdx.y) in b
-        x_b = i * THREADS_PER_BLOCK + cuda.threadIdx.x
-        y_b = cuda.blockIdx.y * THREADS_PER_BLOCK + cuda.threadIdx.y
+        x_b = i * BLOCK_DIM + cuda.threadIdx.x
+        y_b = cuda.blockIdx.y * BLOCK_DIM + cuda.threadIdx.y
         z_b = (idx_z if out_shape[0] == b_shape[0] else 0)
         if x_b < b_shape[1] and y_b < b_shape[2]:
             pos_b = index_to_position((z_b, x_b, y_b), b_strides)
@@ -476,7 +476,7 @@ def _tensor_matrix_multiply(
 
         cuda.syncthreads()
 
-        for j in range(THREADS_PER_BLOCK):
+        for j in range(BLOCK_DIM):
             shm_c[cuda.threadIdx.x][cuda.threadIdx.y] += shm_a[cuda.threadIdx.x][j] * shm_b[j][cuda.threadIdx.y]
 
         cuda.syncthreads()
