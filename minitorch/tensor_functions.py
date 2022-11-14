@@ -1,3 +1,4 @@
+# --hide-error-codes
 """
 Implementation of the autodifferentiation Functions for Tensor.
 """
