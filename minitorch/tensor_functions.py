@@ -426,21 +426,11 @@ Received derivative %f for argument %d and index %s,
 but was expecting derivative %f from central difference.
 
 """
-    def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True, err_msg='', verbose=True):
-    
-
-        def compare(x, y):
-            return np.core.numeric.isclose(x, y, rtol=rtol, atol=atol, equal_nan=equal_nan)
-
-        actual, desired = np.asanyarray(actual), np.asanyarray(desired)
-        header = f'Not equal to tolerance rtol={rtol:g}, atol={atol:g}'
-        np.testing.assert_array_compare(compare, actual, desired, err_msg=str(err_msg), verbose=verbose, header=header, equal_nan=equal_nan)
-
     for i, x in enumerate(vals):
         ind = x._tensor.sample()
         check = grad_central_difference(f, *vals, arg=i, ind=ind)
         assert x.grad is not None
-        assert_allclose(
+        np.testing.assert_allclose(
             x.grad[ind],
             check,
             1e-2,
