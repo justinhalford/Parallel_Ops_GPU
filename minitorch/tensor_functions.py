@@ -395,9 +395,6 @@ def tensor(
 
 
 # Gradient check for tensors
-
-
-@typing.no_type_check
 def grad_central_difference(
     f: Any, *vals: Tensor, arg: int = 0, epsilon: float = 1e-6, ind: UserIndex
 ) -> float:
@@ -410,7 +407,7 @@ def grad_central_difference(
 
     return delta[0] / (2.0 * epsilon)
 
-
+@typing.no_type_check
 def grad_check(f: Any, *vals: Tensor) -> None:
     for x in vals:
         x.requires_grad_(True)
