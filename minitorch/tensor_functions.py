@@ -1,4 +1,3 @@
-# --hide-error-codes
 """
 Implementation of the autodifferentiation Functions for Tensor.
 """
@@ -108,25 +107,21 @@ class Mul(Function):
     def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, Tensor]:
         # TODO: Implement for Task 2.4.
         a, b = ctx.saved_values
-        return (
-            grad_output.f.mul_zip(grad_output, b),
-            grad_output.f.mul_zip(grad_output, a),
-        )
+        return (a.f.mul_zip(grad_output, b), b.f.mul_zip(grad_output, a))
 
 
 class Sigmoid(Function):
     @staticmethod
     def forward(ctx: Context, t1: Tensor) -> Tensor:
         # TODO: Implement for Task 2.3.
-        out = t1.f.sigmoid_map(t1)
-        ctx.save_for_backward(out)
-        return out
+        ctx.save_for_backward(t1)
+        return t1.f.sigmoid_map(t1)
 
     @staticmethod
-    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
+    def backward(ctx: Context, grad_output: Tensor) -> Any:
         # TODO: Implement for Task 2.4.
-        sigma: Tensor = ctx.saved_values[0]
-        return sigma * (-sigma + 1.0) * grad_output
+        (t1,) = ctx.saved_values
+        return t1.f.sigmoid_back_zip(t1, grad_output)
 
 
 class ReLU(Function):
@@ -137,10 +132,10 @@ class ReLU(Function):
         return t1.f.relu_map(t1)
 
     @staticmethod
-    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
+    def backward(ctx: Context, grad_output: Tensor) -> Any:
         # TODO: Implement for Task 2.4.
         (t1,) = ctx.saved_values
-        return grad_output.f.relu_back_zip(t1, grad_output)
+        return t1.f.relu_back_zip(t1, grad_output)
 
 
 class Log(Function):
@@ -151,10 +146,10 @@ class Log(Function):
         return t1.f.log_map(t1)
 
     @staticmethod
-    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
+    def backward(ctx: Context, grad_output: Tensor) -> Any:
         # TODO: Implement for Task 2.4.
         (t1,) = ctx.saved_values
-        return grad_output.f.log_back_zip(t1, grad_output)
+        return t1.f.log_back_zip(t1, grad_output)
 
 
 class Exp(Function):
@@ -166,10 +161,10 @@ class Exp(Function):
         return ret
 
     @staticmethod
-    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
+    def backward(ctx: Context, grad_output: Tensor) -> Any:
         # TODO: Implement for Task 2.4.
         (t1,) = ctx.saved_values
-        return grad_output.f.mul_zip(t1, grad_output)
+        return t1.f.mul_zip(t1, grad_output)
 
 
 class Sum(Function):
@@ -233,19 +228,18 @@ class Permute(Function):
     def forward(ctx: Context, a: Tensor, order: Tensor) -> Tensor:
         # TODO: Implement for Task 2.3.
         ctx.save_for_backward(order)
-        return a._new(a._tensor.permute(*[int(order[i]) for i in range(order.size)]))
+        y = [int(order[x]) for x in range(order.size)]
+        return a._new(a._tensor.permute(*y))
 
     @staticmethod
     def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, float]:
         # TODO: Implement for Task 2.4.
-        order: Tensor = ctx.saved_values[0]
-        order2: List[int] = [
-            a[0]
-            for a in sorted(
-                enumerate([order[i] for i in range(order.size)]), key=lambda a: a[1]
-            )
-        ]
-        return grad_output._new(grad_output._tensor.permute(*order2)), 0.0
+        (order,) = ctx.saved_values
+        y = [int(order[x]) for x in range(order.size)]
+        x = [0] * (len(y))
+        for index, val in enumerate(y):
+            x[val] = index
+        return grad_output._new(grad_output._tensor.permute(*x)), 0.0
 
 
 class View(Function):
@@ -304,11 +298,9 @@ class MatMul(Function):
 def zeros(shape: UserShape, backend: TensorBackend = SimpleBackend) -> Tensor:
     """
     Produce a zero tensor of size `shape`.
-
     Args:
         shape : shape of tensor
         backend : tensor backend
-
     Returns:
         new tensor
     """
@@ -324,12 +316,10 @@ def rand(
 ) -> Tensor:
     """
     Produce a random tensor of size `shape`.
-
     Args:
         shape : shape of tensor
         backend : tensor backend
         requires_grad : turn on autodifferentiation
-
     Returns:
         :class:`Tensor` : new tensor
     """
@@ -347,13 +337,11 @@ def _tensor(
 ) -> Tensor:
     """
     Produce a tensor with data ls and shape `shape`.
-
     Args:
         ls: data for tensor
         shape: shape of tensor
         backend: tensor backend
         requires_grad: turn on autodifferentiation
-
     Returns:
         new tensor
     """
@@ -367,12 +355,10 @@ def tensor(
 ) -> Tensor:
     """
     Produce a tensor with data and shape from ls
-
     Args:
         ls: data for tensor
         backend : tensor backend
         requires_grad : turn on autodifferentiation
-
     Returns:
         :class:`Tensor` : new tensor
     """
@@ -418,15 +404,11 @@ def grad_check(f: Any, *vals: Tensor) -> None:
     out = f(*vals)
     out.sum().backward()
     err_msg = """
-
-Gradient check error for function %s.
-
-Input %s
-
-Received derivative %f for argument %d and index %s,
-but was expecting derivative %f from central difference.
-
-"""
+    Gradient check error for function %s.
+    Input %s
+    Received derivative %f for argument %d and index %s,
+    but was expecting derivative %f from central difference.
+    """
 
     for i, x in enumerate(vals):
         ind = x._tensor.sample()
