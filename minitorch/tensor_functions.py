@@ -5,6 +5,7 @@ Implementation of the autodifferentiation Functions for Tensor.
 from __future__ import annotations
 
 import random
+import typing
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -396,6 +397,7 @@ def tensor(
 # Gradient check for tensors
 
 
+@typing.no_type_check
 def grad_central_difference(
     f: Any, *vals: Tensor, arg: int = 0, epsilon: float = 1e-6, ind: UserIndex
 ) -> float:
