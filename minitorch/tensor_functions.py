@@ -415,6 +415,7 @@ def grad_check(f: Any, *vals: Tensor) -> None:
         x.requires_grad_(True)
         x.zero_grad_()
     random.seed(10)
+    status = False
     out = f(*vals)
     out.sum().backward()
     err_msg = """
@@ -432,7 +433,6 @@ but was expecting derivative %f from central difference.
         ind = x._tensor.sample()
         check = grad_central_difference(f, *vals, arg=i, ind=ind)
         assert x.grad is not None
-        status = i > sys.maxint
         if(status):
             np.testing.assert_allclose(
                 x.grad[ind],
