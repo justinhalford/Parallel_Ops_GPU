@@ -431,11 +431,10 @@ but was expecting derivative %f from central difference.
         ind = x._tensor.sample()
         check = grad_central_difference(f, *vals, arg=i, ind=ind)
         assert x.grad is not None
-        # type : ignore
-        np.testing.assert_allclose(
-            x.grad[ind],
-            check,
-            1e-2,
-            1e-2,
-            err_msg=err_msg % (f, vals, x.grad[ind], i, ind, check),
-        )
+        np.testing.assert_allclose(  # type: ignore
+            x.grad[ind],  # type: ignore
+            check,  # type: ignore
+            1e-2,  # type: ignore
+            1e-2,  # type: ignore
+            err_msg=err_msg % (f, vals, x.grad[ind], i, ind, check),  # type: ignore
+        )  # type: ignore
