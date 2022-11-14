@@ -473,7 +473,7 @@ def _tensor_matrix_multiply(
             else b_storage[index_to_position((kB, iB, jB), b_strides)]
         )
         # Ensure that a_shared and b_shared have been fully populated by all threads before matmul
-        cuda.syncthreads()
+        #cuda.syncthreads()
         for n in range(BLOCK_DIM):
             # Matmul with a column of a_shared * a row of b_shared, indexed by thread's position
             c_shared[pi][pj] += a_shared[pi][n] * b_shared[n][pj]
