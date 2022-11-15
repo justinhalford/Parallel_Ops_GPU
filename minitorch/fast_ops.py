@@ -223,21 +223,21 @@ def tensor_zip(
                     for i in prange(len(out)):
                         out[i] = fn(a_storage[i], b_storage[i])
                     return
-            # Main loop in parallel
-            for i in prange(len(out)):
-                # All indices use numpy buffers
-                a_index, b_index, out_index = (
-                    np.empty(MAX_DIMS, np.int32),
-                    np.empty(MAX_DIMS, np.int32),
-                    np.empty(MAX_DIMS, np.int32),
-                )
-                to_index(i, out_shape, out_index)
-                broadcast_index(out_index, out_shape, a_shape, a_index)
-                broadcast_index(out_index, out_shape, b_shape, b_index)
-                a_position = index_to_position(a_index, a_strides)
-                b_position = index_to_position(b_index, b_strides)
-                out_position = index_to_position(out_index, out_strides)
-                out[out_position] = fn(a_storage[a_position], b_storage[b_position])
+        # Main loop in parallel
+        for i in prange(len(out)):
+            # All indices use numpy buffers
+            a_index, b_index, out_index = (
+                np.empty(MAX_DIMS, np.int32),
+                np.empty(MAX_DIMS, np.int32),
+                np.empty(MAX_DIMS, np.int32),
+            )
+            to_index(i, out_shape, out_index)
+            broadcast_index(out_index, out_shape, a_shape, a_index)
+            broadcast_index(out_index, out_shape, b_shape, b_index)
+            a_position = index_to_position(a_index, a_strides)
+            b_position = index_to_position(b_index, b_strides)
+            out_position = index_to_position(out_index, out_strides)
+            out[out_position] = fn(a_storage[a_position], b_storage[b_position])
         # raise NotImplementedError("Need to implement for Task 3.1")
     
     return njit(parallel=True)(_zip)  # type: ignore
