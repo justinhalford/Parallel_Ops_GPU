@@ -217,13 +217,10 @@ def tensor_zip(
         b_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 3.1.
-        shapeComps = (out_shape == a_shape).all() and (out_shape == b_shape).all()
-        strideCompA = (len(out_strides) == len(a_strides)) and (out_strides == a_strides).all()
-        strideCompB = (len(out_strides) == len(b_strides)) and (out_strides == b_strides).all()
-        if shapeComps and strideCompA and strideCompB:
-            for i in prange(len(out)):
-                out[i] = fn(a_storage[i], b_storage[i])
-        else:
+        shapeComps = (out_shape != a_shape).all() or (out_shape != b_shape).any()
+        strideCompA = (len(out_strides) != len(a_strides)) or (out_strides != a_strides).any()
+        strideCompB = (len(out_strides) != len(b_strides)) or (out_strides != b_strides).any()
+        if shapeComps or strideCompA or strideCompB:
             # Main loop in parallel
             for i in prange(len(out)):
                 # All indices use numpy buffers
@@ -239,6 +236,10 @@ def tensor_zip(
                 b_position = index_to_position(b_index, b_strides)
                 out_position = index_to_position(out_index, out_strides)
                 out[out_position] = fn(a_storage[a_position], b_storage[b_position])
+        else:
+            for i in prange(len(out)):
+                out[i] = fn(a_storage[i], b_storage[i])
+            
             
         # raise NotImplementedError("Need to implement for Task 3.1")
     
