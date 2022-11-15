@@ -219,7 +219,7 @@ def tensor_zip(
         # TODO: Implement for Task 3.1.
         shapeComps = (out_shape == a_shape).all() and (out_shape == b_shape).all()
         strideCompA = (len(out_strides) == len(a_strides)) and (out_strides == a_strides).all()
-        strideCompB = (len(out_strides) == len(b_strides)) and (out_strides != b_strides).all()
+        strideCompB = (len(out_strides) == len(b_strides)) and (out_strides == b_strides).all()
         if shapeComps and strideCompA and strideCompB:
             for i in prange(len(out)):
                 out[i] = fn(a_storage[i], b_storage[i])
