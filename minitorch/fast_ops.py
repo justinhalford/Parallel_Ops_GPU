@@ -218,15 +218,13 @@ def tensor_zip(
     ) -> None:
         # TODO: Implement for Task 3.1.
         strideLenComp = len(a_strides) == len(out_strides) and len(b_strides) == len(out_strides)
-        strideComp = (a_strides == out_strides).all() and (b_strides == out_strides).all()
-        shapeComp = (a_shape == out_shape).all() and (b_shape == out_shape).all()
-
         if strideLenComp:
-            if strideComp:
-                if shapeComp:
-                    for i in prange(len(out)):
-                        out[i] = fn(a_storage[i], b_storage[i])
-                    return
+            strideComp = (a_strides == out_strides).all() and (b_strides == out_strides).all()
+            shapeComp = (a_shape == out_shape).all() and (b_shape == out_shape).all()
+            if strideComp and shapeComp:
+                for i in prange(len(out)):
+                    out[i] = fn(a_storage[i], b_storage[i])
+                return
         # Main loop in parallel
         for i in prange(len(out)):
             # All indices use numpy buffers
