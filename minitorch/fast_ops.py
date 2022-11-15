@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-# import numpy as np
+import numpy as np
 from numba import njit, prange
 
 from .tensor_data import (  # MAX_DIMS,
@@ -10,6 +10,7 @@ from .tensor_data import (  # MAX_DIMS,
     index_to_position,
     shape_broadcast,
     to_index,
+    MAX_DIMS,
 )
 from .tensor_ops import MapProto, TensorOps
 
@@ -160,7 +161,7 @@ def tensor_map(
     ) -> None:
         # TODO: Implement for Task 3.1.
         for i in prange(len(out)):
-            in_index, out_index = in_shape.copy(), out_shape.copy()
+            in_index, out_index = np.empty(MAX_DIMS, np.int32), np.empty(MAX_DIMS, np.int32)
             to_index(i, out_shape, out_index)
             broadcast_index(out_index, out_shape, in_shape, in_index)
             in_position = index_to_position(in_index, in_strides)
@@ -206,11 +207,12 @@ def tensor_zip(
         b_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 3.1.
+        #Main loop in parallel
         for i in prange(len(out)):
             a_index, b_index, out_index = (
-                a_shape.copy(),
-                b_shape.copy(),
-                out_shape.copy(),
+                np.empty(MAX_DIMS, np.int32),
+                np.empty(MAX_DIMS, np.int32),
+                np.empty(MAX_DIMS, np.int32),
             )
             to_index(i, out_shape, out_index)
             broadcast_index(out_index, out_shape, a_shape, a_index)
@@ -221,7 +223,7 @@ def tensor_zip(
             result = fn(a_storage[a_position], b_storage[b_position])
             out[out_position] = result
         # raise NotImplementedError("Need to implement for Task 3.1")
-
+    
     return njit(parallel=True)(_zip)  # type: ignore
 
 

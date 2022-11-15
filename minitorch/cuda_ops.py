@@ -479,7 +479,7 @@ def _tensor_matrix_multiply(
             c_shared[pi][pj] += a_shared[pi][n] * b_shared[n][pj]
         # Need to wait for all threads from all blocks
         cuda.syncthreads()
-    # Fill in out with c[pi][pj] values
+    # Fill in out with c[pi][pj] values, single global write per thread
     if i < out_shape[1] and j < out_shape[2]:
         out[index_to_position((k, i, j), out_strides)] = c_shared[pi][pj]
     # raise NotImplementedError("Need to implement for Task 3.4")
