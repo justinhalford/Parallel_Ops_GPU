@@ -217,22 +217,32 @@ def tensor_zip(
         b_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 3.1.
-
-        # Main loop in parallel
-        for i in prange(len(out)):
-            # All indices use numpy buffers
-            a_index, b_index, out_index = (
-                np.empty(MAX_DIMS, np.int32),
-                np.empty(MAX_DIMS, np.int32),
-                np.empty(MAX_DIMS, np.int32),
-            )
-            to_index(i, out_shape, out_index)
-            broadcast_index(out_index, out_shape, a_shape, a_index)
-            broadcast_index(out_index, out_shape, b_shape, b_index)
-            a_position = index_to_position(a_index, a_strides)
-            b_position = index_to_position(b_index, b_strides)
-            out_position = index_to_position(out_index, out_strides)
-            out[out_position] = fn(a_storage[a_position], b_storage[b_position])
+        if (
+            len(out_strides) != len(a_strides)
+            or len(out_strides) != len(b_strides)
+            or (out_strides != a_strides).any()
+            or (out_strides != b_strides).any()
+            or (out_shape != a_shape).any()
+            or (out_shape != b_shape).any()
+        ):
+            # Main loop in parallel
+            for i in prange(len(out)):
+                # All indices use numpy buffers
+                a_index, b_index, out_index = (
+                    np.empty(MAX_DIMS, np.int32),
+                    np.empty(MAX_DIMS, np.int32),
+                    np.empty(MAX_DIMS, np.int32),
+                )
+                to_index(i, out_shape, out_index)
+                broadcast_index(out_index, out_shape, a_shape, a_index)
+                broadcast_index(out_index, out_shape, b_shape, b_index)
+                a_position = index_to_position(a_index, a_strides)
+                b_position = index_to_position(b_index, b_strides)
+                out_position = index_to_position(out_index, out_strides)
+                out[out_position] = fn(a_storage[a_position], b_storage[b_position])
+        else:
+            for i in prange(len(out)):
+                out[i] = fn(a_storage[i], b_storage[i])
         # raise NotImplementedError("Need to implement for Task 3.1")
     
     return njit(parallel=True)(_zip)  # type: ignore
@@ -331,6 +341,7 @@ def _tensor_matrix_multiply(
 
     # TODO: Implement for Task 3.2.
     assert a_shape[-1] == b_shape[-2]
+    
     for i in prange(len(out)):
         out_index = out_shape.copy()
         to_index(i, out_shape, out_index)
