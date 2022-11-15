@@ -344,7 +344,8 @@ def _tensor_matrix_multiply(
     # b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
 
     # TODO: Implement for Task 3.2.
-    assert a_shape[-1] == b_shape[-2]
+    x, y = -1, -2
+    assert a_shape[x] == b_shape[y]
     # Outer loop in parallel
     for i in prange(len(out)):
         out_index = out_shape.copy()
@@ -352,7 +353,7 @@ def _tensor_matrix_multiply(
         out_position = index_to_position(out_index, out_strides)
         for j in prange(a_shape[-1]):
             a_, b_ = out_index.copy(), out_index.copy()
-            a_[-1], b_[-2] = j, j
+            a_[x], b_[y] = j, j
             a__, b__ = a_shape.copy(), b_shape.copy()
             broadcast_index(a_, out_shape, a_shape, a__)
             a_position = index_to_position(a__, a_strides)
