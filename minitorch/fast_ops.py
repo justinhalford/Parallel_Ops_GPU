@@ -159,25 +159,26 @@ def tensor_map(
         in_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 3.1.
-        shapeComp = (in_shape == out_shape).all()
-        strideComp = (in_strides == out_strides).all() and len(in_strides) == len(out_strides)
-        # When `out` and `in` are stride-aligned, avoid indexing
-        if shapeComp and strideComp:
-            # Main loop in parallel
-            for i in prange(len(out)):
-                out[i] = fn(in_storage[i])
+        strideLenComp = len(in_strides) == len(out_strides)
+        if strideLenComp:
+            strideComp = (in_strides == out_strides).all() and len(in_strides) == len(out_strides)
+            # When `out` and `in` are stride-aligned, avoid indexing
+            if strideComp:
+                # Main loop in parallel
+                for i in prange(len(out)):
+                    out[i] = fn(in_storage[i])
+                return
         # When `out` and `in` are not stride-aligned
-        else:
-            # Main loop in parallel
-            for i in prange(len(out)):
-                # All indices use numpy buffers
-                in_index, out_index = np.empty(MAX_DIMS, np.int32), np.empty(MAX_DIMS, np.int32)
-                to_index(i, out_shape, out_index)
-                broadcast_index(out_index, out_shape, in_shape, in_index)
-                in_position = index_to_position(in_index, in_strides)
-                out_position = index_to_position(out_index, out_strides)
-                result = fn(in_storage[in_position])
-                out[out_position] = result
+        # Main loop in parallel
+        for i in prange(len(out)):
+            # All indices use numpy buffers
+            in_index, out_index = np.empty(MAX_DIMS, np.int32), np.empty(MAX_DIMS, np.int32)
+            to_index(i, out_shape, out_index)
+            broadcast_index(out_index, out_shape, in_shape, in_index)
+            in_position = index_to_position(in_index, in_strides)
+            out_position = index_to_position(out_index, out_strides)
+            result = fn(in_storage[in_position])
+            out[out_position] = result
         # raise NotImplementedError("Need to implement for Task 3.1")
 
     return njit(parallel=True)(_map)  # type: ignore
@@ -220,8 +221,7 @@ def tensor_zip(
         strideLenComp = len(a_strides) == len(out_strides) and len(b_strides) == len(out_strides)
         if strideLenComp:
             strideComp = (a_strides == out_strides).all() and (b_strides == out_strides).all()
-            shapeComp = (a_shape == out_shape).all() and (b_shape == out_shape).all()
-            if strideComp and shapeComp:
+            if strideComp:
                 for i in prange(len(out)):
                     out[i] = fn(a_storage[i], b_storage[i])
                 return
