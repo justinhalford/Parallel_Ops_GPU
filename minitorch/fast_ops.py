@@ -230,14 +230,14 @@ def tensor_zip(
                     out[i] = fn(a_storage[i], b_storage[i])
                 return
         # When `out`, `a`, `b` are not stride-aligned
-        # Main loop in parallel
-        for i in prange(len(out)):
-            # All indices use numpy buffers
+        # All indices use numpy buffers
             a_index, b_index, out_index = (
                 np.empty(MAX_DIMS, np.int32),
                 np.empty(MAX_DIMS, np.int32),
                 np.empty(MAX_DIMS, np.int32),
             )
+        # Main loop in parallel
+        for i in prange(len(out)):
             to_index(i, out_shape, out_index)
             broadcast_index(out_index, out_shape, a_shape, a_index)
             broadcast_index(out_index, out_shape, b_shape, b_index)
