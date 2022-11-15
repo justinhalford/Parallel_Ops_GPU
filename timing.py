@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     ntrials = 3
     times = {}
-    for size in [64, 128, 256, 512, 1024]:
+    for size in [64, 128, 256, 512]:
         print(f"Running size {size}")
         times[size] = {}
         simple_times = []
