@@ -223,10 +223,13 @@ def tensor_zip(
         if strideLenComp:
             strideComp = (a_strides == out_strides).all() and (b_strides == out_strides).all()
             shapeComp = (a_shape == out_shape).all() and (b_shape == out_shape).all()
+            # When `out`, `a`, `b` are stride-aligned, avoid indexing
             if strideComp and shapeComp:
+                # Main loop in parallel
                 for i in prange(len(out)):
                     out[i] = fn(a_storage[i], b_storage[i])
                 return
+        # When `out`, `a`, `b` are not stride-aligned
         # Main loop in parallel
         for i in prange(len(out)):
             # All indices use numpy buffers
@@ -276,7 +279,9 @@ def tensor_reduce(
         reduce_dim: int,
     ) -> None:
         # TODO: Implement for Task 3.1.
+        # Main loop in parallel
         for i in prange(len(out)):
+            # All indices use numpy buffers
             out_index = np.empty(MAX_DIMS, np.int32)
             to_index(i, out_shape, out_index)
             a_index = out_index
@@ -341,12 +346,13 @@ def _tensor_matrix_multiply(
     # TODO: Implement for Task 3.2.
     assert a_shape[-1] == b_shape[-2]
     
+    # Outer loop in parallel
     for i in prange(len(out)):
-        out_index = out_shape.copy()
+        out_index = np.empty(MAX_DIMS, np.int32)
         to_index(i, out_shape, out_index)
         out_position = index_to_position(out_index, out_strides)
         for j in prange(a_shape[-1]):
-            a_index_, b_index_ = out_index.copy(), out_index.copy()
+            a_index_, b_index_ = np.empty(MAX_DIMS, np.int32), np.empty(MAX_DIMS, np.int32)
             a_index_[-1], b_index_[-2] = j, j
             a_index, b_index = a_shape.copy(), b_shape.copy()
             broadcast_index(a_index_, out_shape, a_shape, a_index)
