@@ -217,10 +217,13 @@ def tensor_zip(
         b_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 3.1.
-        compShape = (out_shape != a_shape).any() or (out_shape != b_shape).any()
-        compStrideA = len(out_strides) != len(a_strides) or (out_strides != a_strides).any()
-        compStrideB = len(out_strides) != len(b_strides) or (out_strides != b_strides).any()
-        if (compShape or compStrideA or compStrideB):
+        lenStrides = (len(out_strides) == len(a_strides)) and (len(out_strides) == len(b_strides))
+        shapeComps = (out_shape == a_shape).all() and (out_shape == b_shape).all()
+        strideComps =  (out_strides == a_strides).all() and (out_strides != b_strides).all()
+        if lenStrides and shapeComps and strideComps:
+            for i in prange(len(out)):
+                out[i] = fn(a_storage[i], b_storage[i])
+        else:
             # Main loop in parallel
             for i in prange(len(out)):
                 # All indices use numpy buffers
@@ -236,11 +239,6 @@ def tensor_zip(
                 b_position = index_to_position(b_index, b_strides)
                 out_position = index_to_position(out_index, out_strides)
                 out[out_position] = fn(a_storage[a_position], b_storage[b_position])
-        else:
-            for i in prange(len(out)):
-                out[i] = fn(a_storage[i], b_storage[i])
-            
-            
         # raise NotImplementedError("Need to implement for Task 3.1")
     
     return njit(parallel=True)(_zip)  # type: ignore
