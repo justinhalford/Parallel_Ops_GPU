@@ -161,9 +161,10 @@ def tensor_map(
         # TODO: Implement for Task 3.1.
         strideLenComp = len(in_strides) == len(out_strides)
         if strideLenComp:
+            shapeComp = (in_shape == out_shape).all()
             strideComp = (in_strides == out_strides).all() and len(in_strides) == len(out_strides)
             # When `out` and `in` are stride-aligned, avoid indexing
-            if strideComp:
+            if shapeComp and strideComp:
                 # Main loop in parallel
                 for i in prange(len(out)):
                     out[i] = fn(in_storage[i])
@@ -221,7 +222,8 @@ def tensor_zip(
         strideLenComp = len(a_strides) == len(out_strides) and len(b_strides) == len(out_strides)
         if strideLenComp:
             strideComp = (a_strides == out_strides).all() and (b_strides == out_strides).all()
-            if strideComp:
+            shapeComp = (a_shape == out_shape).all() and (b_shape == out_shape).all()
+            if strideComp and shapeComp:
                 for i in prange(len(out)):
                     out[i] = fn(a_storage[i], b_storage[i])
                 return
