@@ -217,9 +217,13 @@ def tensor_zip(
         b_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 3.1.
-        if len(a_strides) == len(out_strides) and len(b_strides) == len(out_strides):
-            if (a_strides == out_strides).all() and (b_strides == out_strides).all():
-                if (a_shape == out_shape).all() and (b_shape == out_shape).all():
+        strideLenComp = len(a_strides) == len(out_strides) and len(b_strides) == len(out_strides)
+        strideComp = (a_strides == out_strides).all() and (b_strides == out_strides).all()
+        shapeComp = (a_shape == out_shape).all() and (b_shape == out_shape).all()
+
+        if strideLenComp:
+            if strideComp:
+                if shapeComp:
                     for i in prange(len(out)):
                         out[i] = fn(a_storage[i], b_storage[i])
                     return
@@ -273,7 +277,7 @@ def tensor_reduce(
     ) -> None:
         # TODO: Implement for Task 3.1.
         for i in prange(len(out)):
-            out_index = out_shape.copy()
+            out_index = np.empty(MAX_DIMS, np.int32)
             to_index(i, out_shape, out_index)
             a_index = out_index
             out_position = index_to_position(out_index, out_strides)
