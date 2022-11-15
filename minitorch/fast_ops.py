@@ -160,14 +160,22 @@ def tensor_map(
         in_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 3.1.
-        for i in prange(len(out)):
-            in_index, out_index = np.empty(MAX_DIMS, np.int32), np.empty(MAX_DIMS, np.int32)
-            to_index(i, out_shape, out_index)
-            broadcast_index(out_index, out_shape, in_shape, in_index)
-            in_position = index_to_position(in_index, in_strides)
-            out_position = index_to_position(out_index, out_strides)
-            result = fn(in_storage[in_position])
-            out[out_position] = result
+        if not(
+            len(in_strides) == len(in_strides)
+            and (out_strides == in_strides).all()
+            and (out_shape == in_shape).all()
+        ):
+            for i in prange(len(out)):
+                in_index, out_index = np.empty(MAX_DIMS, np.int32), np.empty(MAX_DIMS, np.int32)
+                to_index(i, out_shape, out_index)
+                broadcast_index(out_index, out_shape, in_shape, in_index)
+                in_position = index_to_position(in_index, in_strides)
+                out_position = index_to_position(out_index, out_strides)
+                result = fn(in_storage[in_position])
+                out[out_position] = result
+        else:
+            for i in prange(len(out)):
+                out[i] = fn(in_storage[i])
         # raise NotImplementedError("Need to implement for Task 3.1")
 
     return njit(parallel=True)(_map)  # type: ignore
