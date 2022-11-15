@@ -5,12 +5,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 from numba import njit, prange
 
-from .tensor_data import (  # MAX_DIMS,
+from .tensor_data import (  MAX_DIMS,
     broadcast_index,
     index_to_position,
     shape_broadcast,
     to_index,
-    MAX_DIMS,
 )
 from .tensor_ops import MapProto, TensorOps
 
@@ -220,8 +219,8 @@ def tensor_zip(
         # TODO: Implement for Task 3.1.
         shapeCompA = (a_shape == out_shape).all()
         shapeCompB = (b_shape == out_shape).all()
-        strideCompA = (a_strides == out_strides).all() and len(a_strides) == len(out_strides)
-        strideCompB = (a_strides == out_strides).all() and len(a_strides) == len(out_strides)
+        strideCompA = (a_strides == out_strides).all() and (len(a_strides) == len(out_strides))
+        strideCompB = (b_strides == out_strides).all() and (len(b_strides) == len(out_strides))
         # When `out`, `a`, `b` are stride-aligned, avoid indexing
         if shapeCompA and shapeCompB and strideCompA and strideCompB:
             # Main loop in parallel
