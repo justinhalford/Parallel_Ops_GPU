@@ -217,7 +217,7 @@ def tensor_zip(
         b_strides: Strides,
     ) -> None:
         # TODO: Implement for Task 3.1.
-        lenStrides = (len(out_strides) == len(a_strides)) or (len(out_strides) == len(b_strides))
+        lenStrides = (len(out_strides) == len(a_strides)) and (len(out_strides) == len(b_strides))
         shapeComps = (out_shape == a_shape).all() and (out_shape == b_shape).all()
         strideComps =  (out_strides == a_strides).all() and (out_strides == b_strides).all()
         if lenStrides and shapeComps and strideComps:
