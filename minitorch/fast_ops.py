@@ -162,12 +162,16 @@ def tensor_map(
         # TODO: Implement for Task 3.1.
         shapeComp = (in_shape == out_shape).all()
         strideComp = (in_strides == out_strides).all() and len(in_strides) == len(out_strides)
-
+        # When `out` and `in` are stride-aligned, avoid indexing
         if shapeComp and strideComp:
+            # Main loop in parallel
             for i in prange(len(out)):
                 out[i] = fn(in_storage[i])
+        # When `out` and `in` are not stride-aligned
         else:
+            # Main loop in parallel
             for i in prange(len(out)):
+                # All indices use numpy buffers
                 in_index, out_index = np.empty(MAX_DIMS, np.int32), np.empty(MAX_DIMS, np.int32)
                 to_index(i, out_shape, out_index)
                 broadcast_index(out_index, out_shape, in_shape, in_index)
