@@ -345,20 +345,19 @@ def _tensor_matrix_multiply(
 
     # TODO: Implement for Task 3.2.
     assert a_shape[-1] == b_shape[-2]
-    
     # Outer loop in parallel
     for i in prange(len(out)):
         out_index = out_shape.copy()
         to_index(i, out_shape, out_index)
         out_position = index_to_position(out_index, out_strides)
         for j in prange(a_shape[-1]):
-            a_index_, b_index_ = out_index.copy(), out_index.copy()
-            a_index_[-1], b_index_[-2] = j, j
-            a_index, b_index = a_shape.copy(), b_shape.copy()
-            broadcast_index(a_index_, out_shape, a_shape, a_index)
-            a_position = index_to_position(a_index, a_strides)
-            broadcast_index(b_index_, out_shape, b_shape, b_index)
-            b_position = index_to_position(b_index, b_strides)
+            a_, b_ = out_index.copy(), out_index.copy()
+            a_[-1], b_[-2] = j, j
+            a__, b__ = a_shape.copy(), b_shape.copy()
+            broadcast_index(a_, out_shape, a_shape, a__)
+            a_position = index_to_position(a__, a_strides)
+            broadcast_index(b_, out_shape, b_shape, b__)
+            b_position = index_to_position(b__, b_strides)
             a_comp, b_comp = a_storage[a_position], b_storage[b_position]
             out[out_position] += a_comp * b_comp
     # raise NotImplementedError("Need to implement for Task 3.2")
